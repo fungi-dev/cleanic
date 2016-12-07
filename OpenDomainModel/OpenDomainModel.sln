@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3A82267F-BB82-4AE9-9295-68CB4674E76A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{03BFC2A5-06EC-48C7-A628-987A3F277F12}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Domain", "src\Domain\Domain.xproj", "{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FC133B34-6D7C-4992-8B75-A929A49270F3}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Domain.Tests", "test\Domain.Tests\Domain.Tests.xproj", "{95DF2AD7-35E0-4113-A5EE-FA706527F480}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95DF2AD7-35E0-4113-A5EE-FA706527F480}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95DF2AD7-35E0-4113-A5EE-FA706527F480}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95DF2AD7-35E0-4113-A5EE-FA706527F480}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95DF2AD7-35E0-4113-A5EE-FA706527F480}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8D12BFBB-CACD-41D0-941A-73DA79E3B7C7} = {3A82267F-BB82-4AE9-9295-68CB4674E76A}
+		{95DF2AD7-35E0-4113-A5EE-FA706527F480} = {FC133B34-6D7C-4992-8B75-A929A49270F3}
+	EndGlobalSection
+EndGlobal
