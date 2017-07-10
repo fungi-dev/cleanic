@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace OpenDomainModel
+namespace FrogsTalks.Tests
 {
     public class ContextMapTests
     {

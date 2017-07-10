@@ -1,4 +1,4 @@
-﻿namespace OpenDomainModel
+﻿namespace FrogsTalks.Tests
 {
     public class EmptyAggregate : IAggregateRoot { }
 

@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace OpenDomainModel
+namespace FrogsTalks
 {
     public class ProjectionInfo : MessageInfo
     {

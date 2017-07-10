@@ -1,4 +1,4 @@
-﻿namespace OpenDomainModel
+﻿namespace FrogsTalks
 {
     /// <summary>
     /// I can be used to tell the application to do something.

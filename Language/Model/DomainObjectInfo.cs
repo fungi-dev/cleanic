@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace OpenDomainModel
+namespace FrogsTalks
 {
     public abstract class DomainObjectInfo
     {

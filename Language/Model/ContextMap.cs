@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Reflection;
 
-namespace OpenDomainModel
+namespace FrogsTalks
 {
     public class ContextMap
     {

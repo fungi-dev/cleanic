@@ -1,4 +1,4 @@
-﻿namespace OpenDomainModel
+﻿namespace FrogsTalks
 {
     /// <summary>
     /// I can be the result of some query to the application.
