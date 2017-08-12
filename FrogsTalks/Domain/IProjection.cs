@@ -1,7 +1,7 @@
-﻿namespace FrogsTalks
+﻿namespace FrogsTalks.Domain
 {
     /// <summary>
-    /// I can be the result of some query to the application.
+    /// Information about the state of the domain.
     /// </summary>
     public interface IProjection : IMessage { }
 }
