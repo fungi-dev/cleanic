@@ -6,9 +6,9 @@
     <RootNamespace>FrogsTalks</RootNamespace>
     <Authors>Eugene Griaznov</Authors>
     <Company />
-    <Description />
+    <Description>Framework for building a business service.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
