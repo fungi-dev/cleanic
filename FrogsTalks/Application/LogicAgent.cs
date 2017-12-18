@@ -50,12 +50,9 @@ namespace FrogsTalks.Application
 
             agg.Id = c.Id;
             var source = _db.Load(agg.Id);
-            agg.ApplyEvents(source);
+            agg.LoadFromHistory(source);
 
-            var emitted = new IEvent[0];
-            emitted = handler(agg, c).ToArray();
-            foreach (var e in emitted) e.Id = agg.Id;
-
+            var emitted = handler(agg, c);
             if (emitted.Length > 0) _db.Save(agg.Id, agg.Version, emitted);
 
             foreach (var e in emitted) _bus.Publish(e);
