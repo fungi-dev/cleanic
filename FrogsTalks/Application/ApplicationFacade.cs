@@ -1,7 +1,7 @@
-﻿using FrogsTalks.Application.Ports;
+﻿using System;
+using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 using FrogsTalks.UseCases;
-using System;
 
 namespace FrogsTalks.Application
 {

@@ -1,6 +1,6 @@
-﻿using FrogsTalks.Domain;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application.Ports
 {
@@ -48,8 +48,14 @@ namespace FrogsTalks.Application.Ports
         /// </summary>
         public void Save(IProjection projection)
         {
-            if (!_db.ContainsKey(projection.Id)) _db.Add(projection.Id, projection);
-            else _db[projection.Id] = projection;
+            if (!_db.ContainsKey(projection.Id))
+            {
+                _db.Add(projection.Id, projection);
+            }
+            else
+            {
+                _db[projection.Id] = projection;
+            }
         }
 
         private readonly Dictionary<Guid, IProjection> _db = new Dictionary<Guid, IProjection>();

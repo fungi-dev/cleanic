@@ -1,8 +1,7 @@
-﻿using FrogsTalks.Application.Ports;
+﻿using System;
+using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 using FrogsTalks.UseCases;
-using System;
-using System.Linq;
 
 namespace FrogsTalks.Application
 {
@@ -22,7 +21,7 @@ namespace FrogsTalks.Application
             _bus = bus;
             _db = db;
 
-            bus.HandleCommands(c => HandleCommand(c));
+            bus.HandleCommands(HandleCommand);
         }
 
         /// <summary>

@@ -1,6 +1,6 @@
-﻿using FrogsTalks.Domain;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application.Ports
 {
@@ -23,7 +23,7 @@ namespace FrogsTalks.Application.Ports
         /// <param name="id">Aggregate's identifier.</param>
         /// <param name="eventsLoaded">Number of occurred events in the moment when the aggregate was loaded.</param>
         /// <param name="newEvents">The events to be saved.</param>
-        void Save(Guid id, int eventsLoaded, IEvent[] newEvents);
+        void Save(Guid id, Int32 eventsLoaded, IEvent[] newEvents);
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ namespace FrogsTalks.Application.Ports
     /// <remarks>
     /// This is an embedded <see cref="IEventStore">port</see> adapter implementation for tests and experiments.
     /// </remarks>
-    public class InMemoryEventStore : IEventStore
+    public sealed class InMemoryEventStore : IEventStore
     {
         /// <summary>
         /// Load all events for the aggregate.
@@ -41,8 +41,7 @@ namespace FrogsTalks.Application.Ports
         /// <returns>All aggregate's events ordered by time.</returns>
         public IEvent[] Load(Guid id)
         {
-            if (db.ContainsKey(id)) return db[id].ToArray();
-            return Array.Empty<IEvent>();
+            return _db.ContainsKey(id) ? _db[id].ToArray() : Array.Empty<IEvent>();
         }
 
         /// <summary>
@@ -51,13 +50,13 @@ namespace FrogsTalks.Application.Ports
         /// <param name="id">Aggregate's identifier.</param>
         /// <param name="eventsLoaded">Number of occurred events in the moment when the aggregate was loaded.</param>
         /// <param name="newEvents">The events to be saved.</param>
-        public void Save(Guid id, int eventsLoaded, IEvent[] newEvents)
+        public void Save(Guid id, Int32 eventsLoaded, IEvent[] newEvents)
         {
-            if (!db.ContainsKey(id)) db.Add(id, new List<IEvent>());
-            if (db[id].Count != eventsLoaded) throw new Exception("Concurrency conflict: cannot persist these events!");
-            db[id].AddRange(newEvents);
+            if (!_db.ContainsKey(id)) _db.Add(id, new List<IEvent>());
+            if (_db[id].Count != eventsLoaded) throw new Exception("Concurrency conflict: cannot persist these events!");
+            _db[id].AddRange(newEvents);
         }
 
-        private Dictionary<Guid, List<IEvent>> db = new Dictionary<Guid, List<IEvent>>();
+        private readonly Dictionary<Guid, List<IEvent>> _db = new Dictionary<Guid, List<IEvent>>();
     }
 }

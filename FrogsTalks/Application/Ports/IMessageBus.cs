@@ -1,7 +1,7 @@
-﻿using FrogsTalks.Domain;
-using FrogsTalks.UseCases;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FrogsTalks.Domain;
+using FrogsTalks.UseCases;
 
 namespace FrogsTalks.Application.Ports
 {
@@ -126,13 +126,15 @@ namespace FrogsTalks.Application.Ports
                     {
                         var handlers = new List<Action<IEvent>>(_eventSubscribers[type]);
                         foreach (var handler in handlers)
+                        {
                             handler((IEvent)message);
+                        }
                     }
                 }
             }
         }
 
-        private bool _busy;
+        private Boolean _busy;
         private readonly Queue<Object> _queue;
         private Action<ICommand> _commandHandler;
         private readonly Dictionary<Type, List<Action<IEvent>>> _eventSubscribers;

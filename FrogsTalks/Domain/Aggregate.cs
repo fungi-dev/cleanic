@@ -15,7 +15,7 @@ namespace FrogsTalks.Domain
         /// <summary>
         /// The number of occured events.
         /// </summary>
-        public int Version { get; private set; }
+        public Int32 Version { get; private set; }
 
         /// <summary>
         /// Events which haven't been persisted yet.
