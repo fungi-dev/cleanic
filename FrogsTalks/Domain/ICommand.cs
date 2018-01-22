@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FrogsTalks.UseCases
+namespace FrogsTalks.Domain
 {
     /// <summary>
     /// The request of changes to the domain.

@@ -26,8 +26,13 @@ namespace FrogsTalks.Domain
         /// Lead the aggregate to state when all events have been applied.
         /// </summary>
         /// <param name="history">Events to be applied.</param>
-        public void LoadFromHistory(IEnumerable<IEvent> history)
+        public void LoadFromHistory(ICollection<IEvent> history)
         {
+            var aggIds = history.Select(_ => _.Id).Distinct().ToArray();
+            if (aggIds.Length > 1) throw new InvalidOperationException("Attempt to load aggregate from events of many!");
+            if (aggIds.Length < 1) return;
+
+            Id = aggIds.Single();
             foreach (var e in history) Apply(e, true);
         }
 

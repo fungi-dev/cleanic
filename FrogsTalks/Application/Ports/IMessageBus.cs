@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using FrogsTalks.Domain;
-using FrogsTalks.UseCases;
 
 namespace FrogsTalks.Application.Ports
 {

@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrogsTalks", "FrogsTalks\FrogsTalks.csproj", "{8D5BB0E3-6449-4536-A72F-77D2690A18F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrogsTalks.Tests", "FrogsTalks.Tests\FrogsTalks.Tests.csproj", "{523CCEE0-0C36-4A5E-ABF8-FBA8E52A4BE5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrogsTalks.Tests", "FrogsTalks.Tests\FrogsTalks.Tests.csproj", "{523CCEE0-0C36-4A5E-ABF8-FBA8E52A4BE5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

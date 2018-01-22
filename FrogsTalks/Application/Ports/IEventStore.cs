@@ -34,22 +34,13 @@ namespace FrogsTalks.Application.Ports
     /// </remarks>
     public sealed class InMemoryEventStore : IEventStore
     {
-        /// <summary>
-        /// Load all events for the aggregate.
-        /// </summary>
-        /// <param name="id">Aggregate's identifier.</param>
-        /// <returns>All aggregate's events ordered by time.</returns>
+        /// <inheritdoc />
         public IEvent[] Load(Guid id)
         {
             return _db.ContainsKey(id) ? _db[id].ToArray() : Array.Empty<IEvent>();
         }
 
-        /// <summary>
-        /// Save events for the aggregate.
-        /// </summary>
-        /// <param name="id">Aggregate's identifier.</param>
-        /// <param name="eventsLoaded">Number of occurred events in the moment when the aggregate was loaded.</param>
-        /// <param name="newEvents">The events to be saved.</param>
+        /// <inheritdoc />
         public void Save(Guid id, Int32 eventsLoaded, IEvent[] newEvents)
         {
             if (!_db.ContainsKey(id)) _db.Add(id, new List<IEvent>());

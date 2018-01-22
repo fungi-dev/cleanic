@@ -3,5 +3,5 @@
     /// <summary>
     /// Domain object representing characteristic of some other object.
     /// </summary>
-    public class ValueObject : DomainObject { }
+    public abstract class ValueObject : DomainObject { }
 }

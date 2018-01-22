@@ -3,5 +3,5 @@
     /// <summary>
     /// The object having meaning in the domain.
     /// </summary>
-    public class DomainObject { }
+    public abstract class DomainObject { }
 }

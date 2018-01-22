@@ -38,17 +38,17 @@ namespace FrogsTalks
 
         private void WriteBackendIsCreated()
         {
-            new Logic(_bus, _writeDb);
+            new LogicAgent(_bus, _writeDb, typeof(Product));
         }
 
         private void ReadBackendIsCreated()
         {
-            new Projections(_bus, _readDb);
+            new ProjectionAgent(_bus, _readDb, typeof(Bill));
         }
 
         private void ApplicationFacadeIsCreated()
         {
-            _app = new CashMushroom.Application(_bus, _readDb);
+            _app = new ApplicationFacade(_bus, _readDb);
         }
 
         #endregion
@@ -57,7 +57,7 @@ namespace FrogsTalks
 
         private void YouSendSomeCommand()
         {
-            var cmd = new RecordCosts
+            var cmd = new Product.RecordCosts
             {
                 Id = _1,
                 Buyer = _bob,

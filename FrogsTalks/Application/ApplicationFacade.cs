@@ -1,21 +1,20 @@
 ﻿using System;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
-using FrogsTalks.UseCases;
 
 namespace FrogsTalks.Application
 {
     /// <summary>
     /// Facade for interact with the application.
     /// </summary>
-    public abstract class ApplicationFacade
+    public class ApplicationFacade
     {
         /// <summary>
         /// Create an instance of the application facade.
         /// </summary>
         /// <param name="bus">Bus where user commands will be sent.</param>
         /// <param name="db">Storage where queried data will be taken.</param>
-        protected ApplicationFacade(IMessageBus bus, IProjectionsReader db)
+        public ApplicationFacade(IMessageBus bus, IProjectionsReader db)
         {
             _bus = bus;
             _db = db;
