@@ -52,7 +52,7 @@ namespace FrogsTalks.Application
         /// <param name="aggregate">Aggregate with all current events applied.</param>
         /// <param name="command">Command data.</param>
         /// <returns>New events which occurred while handling command.</returns>
-        protected virtual IEvent[] ProduceEvents(Aggregate aggregate, ICommand command)
+        protected virtual Event[] ProduceEvents(Aggregate aggregate, ICommand command)
         {
             if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
             if (command == null) throw new ArgumentNullException(nameof(command));

@@ -20,19 +20,19 @@ namespace FrogsTalks.Domain
         /// <summary>
         /// Events which haven't been persisted yet.
         /// </summary>
-        public IEnumerable<IEvent> FreshChanges => _changes;
+        public IEnumerable<Event> FreshChanges => _changes;
 
         /// <summary>
         /// Lead the aggregate to state when all events have been applied.
         /// </summary>
         /// <param name="history">Events to be applied.</param>
-        public void LoadFromHistory(ICollection<IEvent> history)
+        public void LoadFromHistory(ICollection<Event> history)
         {
-            var aggIds = history.Select(_ => _.Id).Distinct().ToArray();
-            if (aggIds.Length > 1) throw new InvalidOperationException("Attempt to load aggregate from events of many!");
-            if (aggIds.Length < 1) return;
+            if (!history.Any()) return;
 
-            Id = aggIds.Single();
+            var initial = (InitialEvent)history.Single(_ => _ is InitialEvent);
+            Id = initial.AggregateId;
+
             foreach (var e in history) Apply(e, true);
         }
 
@@ -42,7 +42,7 @@ namespace FrogsTalks.Domain
         /// And update aggregate's state if needed.
         /// </summary>
         /// <remarks>All events produced by aggregate should be passed into this method.</remarks>
-        protected void Apply(IEvent @event)
+        protected void Apply(Event @event)
         {
             Apply(@event, false);
         }
@@ -61,9 +61,9 @@ namespace FrogsTalks.Domain
             return null;
         }
 
-        private readonly List<IEvent> _changes = new List<IEvent>();
+        private readonly List<Event> _changes = new List<Event>();
 
-        private void Apply(IEvent @event, Boolean isPersisted)
+        private void Apply(Event @event, Boolean isPersisted)
         {
             var applier = GetApplierOfConcreteEvent(@event.GetType());
             applier?.Invoke(this, new Object[] { @event });

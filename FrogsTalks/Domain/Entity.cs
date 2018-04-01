@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FrogsTalks.Domain
 {
@@ -11,5 +12,10 @@ namespace FrogsTalks.Domain
         /// The unique identifier of the entity.
         /// </summary>
         public Guid Id { get; protected set; }
+
+        protected override IEnumerable<Object> GetIdentityComponents()
+        {
+            yield return Id;
+        }
     }
 }

@@ -5,11 +5,18 @@ namespace FrogsTalks.Domain
     /// <summary>
     /// Represents something that took place in the domain.
     /// </summary>
-    public interface IEvent
+    public abstract class Event : ValueObject
     {
         /// <summary>
         /// The unique identifier of the aggregate.
         /// </summary>
-        Guid Id { get; set; }
+        public Guid AggregateId { get; set; }
+
+        public override String ToString()
+        {
+            return GetType().Name;
+        }
     }
+
+    public abstract class InitialEvent : Event { }
 }

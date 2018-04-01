@@ -22,12 +22,12 @@ namespace FrogsTalks.DomainInfo
             {
                 throw new ArgumentException("Attempt to build projection model for non-projection type!");
             }
-            
+
             _eventAppliers = (from m in projectionType.GetRuntimeMethods()
                               let p = m.GetParameters()
                               where p.Length == 1
                               let t = p[0].ParameterType
-                              where typeof(IEvent).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                              where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                               group m by t
                               into gm
                               select gm).ToDictionary(x => x.Key, x => x.ToArray());
@@ -36,7 +36,7 @@ namespace FrogsTalks.DomainInfo
                              let p = m.GetParameters()
                              where p.Length == 1
                              let t = p[0].ParameterType
-                             where typeof(IEvent).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                             where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                              let r = m.ReturnType
                              where r == typeof(Guid)
                              where m.IsStatic
@@ -58,10 +58,10 @@ namespace FrogsTalks.DomainInfo
         /// <summary>
         /// Get action which apply data from event instance to passed projection.
         /// </summary>
-        public Action<IProjection, IEvent> GetEventApplier(Type eventType)
+        public Action<IProjection, Event> GetEventApplier(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
-            if (!typeof(IEvent).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
+            if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
             {
                 throw new ArgumentException($"{eventType} is not an event type!");
             }
@@ -77,10 +77,10 @@ namespace FrogsTalks.DomainInfo
         /// <summary>
         /// Get action which extract projection identifier from passed event.
         /// </summary>
-        public Func<IEvent, Guid> GetIdFromEventExtractor(Type eventType)
+        public Func<Event, Guid> GetIdFromEventExtractor(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
-            if (!typeof(IEvent).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
+            if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
             {
                 throw new ArgumentException($"{eventType} is not an event type!");
             }
@@ -88,7 +88,7 @@ namespace FrogsTalks.DomainInfo
             return e =>
             {
                 var t = e.GetType();
-                if (!_idExtractors.ContainsKey(t)) return e.Id;
+                if (!_idExtractors.ContainsKey(t)) return e.AggregateId;
                 return (Guid)_idExtractors[t].Invoke(null, new Object[] { e });
             };
         }

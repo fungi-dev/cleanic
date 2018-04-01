@@ -59,7 +59,7 @@ namespace FrogsTalks
         {
             try
             {
-                _bus.Publish(new Event { Id = _1 });
+                _bus.Publish(new TestEvent { AggregateId = _1 });
             }
             catch (Exception e)
             {
@@ -107,10 +107,7 @@ namespace FrogsTalks
 
         #region Test types
 
-        private class Event : IEvent
-        {
-            public Guid Id { get; set; }
-        }
+        private class TestEvent : Event { }
 
         private class Projection : IProjection
         {
@@ -118,12 +115,12 @@ namespace FrogsTalks
             public Boolean FirstMethodCalled { get; private set; }
             public Boolean SecondMethodCalled { get; private set; }
 
-            public void FirstApplier(Event e)
+            public void FirstApplier(TestEvent e)
             {
                 FirstMethodCalled = true;
             }
 
-            public void SecondApplier(Event e)
+            public void SecondApplier(TestEvent e)
             {
                 SecondMethodCalled = true;
             }

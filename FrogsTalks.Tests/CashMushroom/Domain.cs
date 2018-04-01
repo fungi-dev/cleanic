@@ -15,10 +15,15 @@ namespace FrogsTalks.CashMushroom
         {
             if (Version > 0) throw new ProductAlreadyPurchased();
 
+            Apply(new ProductPurchased
+            {
+                Id = c.Id,
+                Name = c.Name
+            });
+
             Apply(new CostsRecorded
             {
                 Id = c.Id,
-                Name = c.Name,
                 Cost = c.Cost,
                 Buyer = c.Buyer,
                 Payers = c.Payers
@@ -28,8 +33,8 @@ namespace FrogsTalks.CashMushroom
         #endregion
 
         #region State
-        
-        public void On(CostsRecorded e)
+
+        public void On(ProductPurchased e)
         {
             Id = e.Id;
         }
@@ -60,10 +65,15 @@ namespace FrogsTalks.CashMushroom
 
         #region Events
 
-        public class CostsRecorded : IEvent
+        public class ProductPurchased : InitialEvent
         {
             public Guid Id { get; set; }
             public String Name { get; set; }
+        }
+
+        public class CostsRecorded : Event
+        {
+            public Guid Id { get; set; }
             public Decimal Cost { get; set; }
             public String Buyer { get; set; }
             public String[] Payers { get; set; }

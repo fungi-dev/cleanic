@@ -32,7 +32,7 @@ namespace FrogsTalks.Application
             }
         }
 
-        private void RunProjectionUpdating(ProjectionInfo projectionInfo, IEvent @event)
+        private void RunProjectionUpdating(ProjectionInfo projectionInfo, Event @event)
         {
             var eventType = @event.GetType();
 

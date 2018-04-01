@@ -23,13 +23,13 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        void Publish(IEvent @event);
+        void Publish(Event @event);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        void ListenEvent(Type eventType, Action<IEvent> listener);
+        void ListenEvent(Type eventType, Action<Event> listener);
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ namespace FrogsTalks.Application.Ports
         {
             _busy = false;
             _queue = new Queue<Object>();
-            _eventSubscribers = new Dictionary<Type, List<Action<IEvent>>>();
+            _eventSubscribers = new Dictionary<Type, List<Action<Event>>>();
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        public void Publish(IEvent @event)
+        public void Publish(Event @event)
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
             Handle(@event);
@@ -82,9 +82,9 @@ namespace FrogsTalks.Application.Ports
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        public void ListenEvent(Type eventType, Action<IEvent> listener)
+        public void ListenEvent(Type eventType, Action<Event> listener)
         {
-            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Action<IEvent>>());
+            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Action<Event>>());
             var current = _eventSubscribers[eventType];
             if (!current.Contains(listener)) current.Add(listener);
         }
@@ -119,14 +119,14 @@ namespace FrogsTalks.Application.Ports
                     _commandHandler((ICommand)message);
                 }
 
-                if (message is IEvent)
+                if (message is Event)
                 {
                     if (_eventSubscribers.ContainsKey(type))
                     {
-                        var handlers = new List<Action<IEvent>>(_eventSubscribers[type]);
+                        var handlers = new List<Action<Event>>(_eventSubscribers[type]);
                         foreach (var handler in handlers)
                         {
-                            handler((IEvent)message);
+                            handler((Event)message);
                         }
                     }
                 }
@@ -136,6 +136,6 @@ namespace FrogsTalks.Application.Ports
         private Boolean _busy;
         private readonly Queue<Object> _queue;
         private Action<ICommand> _commandHandler;
-        private readonly Dictionary<Type, List<Action<IEvent>>> _eventSubscribers;
+        private readonly Dictionary<Type, List<Action<Event>>> _eventSubscribers;
     }
 }
