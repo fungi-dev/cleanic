@@ -9,24 +9,27 @@ namespace FrogsTalks.CashMushroom
 
     public class Product : Aggregate
     {
-        #region Command handlers
+        public Product(Guid id) : base(id) { }
 
-        public void Do(RecordCosts c)
+        #region Behaviour
+
+        public void Purchase(String name)
         {
             if (Version > 0) throw new ProductAlreadyPurchased();
 
-            Apply(new ProductPurchased
-            {
-                Id = c.Id,
-                Name = c.Name
-            });
+            Apply(new ProductPurchased { AggregateId = Id, Name = name });
+        }
+
+        public void RecordCosts(Decimal cost, String buyer, IEnumerable<String> payers)
+        {
+            if (Version == 0) throw new ProductIsNotPurchasedYet();
 
             Apply(new CostsRecorded
             {
-                Id = c.Id,
-                Cost = c.Cost,
-                Buyer = c.Buyer,
-                Payers = c.Payers
+                AggregateId = Id,
+                Cost = cost,
+                Buyer = buyer,
+                Payers = payers.ToArray()
             });
         }
 
@@ -34,9 +37,11 @@ namespace FrogsTalks.CashMushroom
 
         #region State
 
+        public String Name { get; private set; }
+
         public void On(ProductPurchased e)
         {
-            Id = e.Id;
+            Name = e.Name;
         }
 
         #endregion
@@ -50,30 +55,15 @@ namespace FrogsTalks.CashMushroom
 
         #endregion
 
-        #region Commands
-
-        public class RecordCosts : ICommand
-        {
-            public Guid Id { get; set; }
-            public String Name { get; set; }
-            public Decimal Cost { get; set; }
-            public String Buyer { get; set; }
-            public String[] Payers { get; set; }
-        }
-
-        #endregion
-
         #region Events
 
         public class ProductPurchased : InitialEvent
         {
-            public Guid Id { get; set; }
             public String Name { get; set; }
         }
 
         public class CostsRecorded : Event
         {
-            public Guid Id { get; set; }
             public Decimal Cost { get; set; }
             public String Buyer { get; set; }
             public String[] Payers { get; set; }
@@ -81,7 +71,28 @@ namespace FrogsTalks.CashMushroom
 
         public class ProductAlreadyPurchased : Exception { }
 
+        public class ProductIsNotPurchasedYet : Exception { }
+
         #endregion
+    }
+
+    #endregion
+
+    #region Commands
+
+    public class RecordCosts : Command<Product>
+    {
+        public Guid Id { get; set; }
+        public String Name { get; set; }
+        public Decimal Cost { get; set; }
+        public String Buyer { get; set; }
+        public String[] Payers { get; set; }
+
+        public override void Run(Product product)
+        {
+            product.Purchase(Name);
+            product.RecordCosts(Cost, Buyer, Payers);
+        }
     }
 
     #endregion

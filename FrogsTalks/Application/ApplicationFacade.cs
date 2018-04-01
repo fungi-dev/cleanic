@@ -24,7 +24,7 @@ namespace FrogsTalks.Application
         /// Order the application to do something.
         /// </summary>
         /// <param name="command">Command details.</param>
-        public void Do(ICommand command)
+        public void Do(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
             _bus.Send(command);

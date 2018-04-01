@@ -12,13 +12,13 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        void Send(ICommand command);
+        void Send(Command command);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        void HandleCommands(Action<ICommand> handler);
+        void HandleCommands(Action<Command> handler);
 
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
@@ -53,7 +53,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        public void Send(ICommand command)
+        public void Send(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
             Handle(command);
@@ -72,7 +72,7 @@ namespace FrogsTalks.Application.Ports
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        public void HandleCommands(Action<ICommand> handler)
+        public void HandleCommands(Action<Command> handler)
         {
             if (_commandHandler != null) throw new Exception("Handler already registered!");
             _commandHandler = handler;
@@ -113,10 +113,10 @@ namespace FrogsTalks.Application.Ports
                 var message = _queue.Dequeue();
                 var type = message.GetType();
 
-                if (message is ICommand)
+                if (message is Command)
                 {
                     if (_commandHandler == null) throw new Exception("Can't find command handler!");
-                    _commandHandler((ICommand)message);
+                    _commandHandler((Command)message);
                 }
 
                 if (message is Event)
@@ -135,7 +135,7 @@ namespace FrogsTalks.Application.Ports
 
         private Boolean _busy;
         private readonly Queue<Object> _queue;
-        private Action<ICommand> _commandHandler;
+        private Action<Command> _commandHandler;
         private readonly Dictionary<Type, List<Action<Event>>> _eventSubscribers;
     }
 }

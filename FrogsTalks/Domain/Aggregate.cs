@@ -12,6 +12,11 @@ namespace FrogsTalks.Domain
     /// </summary>
     public abstract class Aggregate : Entity
     {
+        protected Aggregate(Guid id)
+        {
+            Id = id;
+        }
+
         /// <summary>
         /// The number of occured events.
         /// </summary>

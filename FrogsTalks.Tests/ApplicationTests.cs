@@ -38,7 +38,7 @@ namespace FrogsTalks
 
         private void WriteBackendIsCreated()
         {
-            new LogicAgent(_bus, _writeDb, typeof(Product));
+            new LogicAgent(_bus, _writeDb);
         }
 
         private void ReadBackendIsCreated()
@@ -57,7 +57,7 @@ namespace FrogsTalks
 
         private void YouSendSomeCommand()
         {
-            var cmd = new Product.RecordCosts
+            var cmd = new RecordCosts
             {
                 Id = _1,
                 Buyer = _bob,
