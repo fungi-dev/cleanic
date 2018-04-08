@@ -74,7 +74,7 @@ namespace FrogsTalks
 
         private void AppropriateProjectionIsBuilt()
         {
-            var bill = _app.Get<Bill>(Tenant.Id);
+            var bill = _app.Get<Bill>(Constants.TenantId);
             var bobPart = bill.Parties.Single(x => x.Name == _bob);
             bobPart.Total.ShouldBe(_2k);
             var otherParts = bill.Parties.Where(x => x.Name != _bob);

@@ -13,7 +13,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Load the projection by identifier.
         /// </summary>
-        IProjection Load(Guid id);
+        Projection Load(Guid id);
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Save the projection for further loading by identifier.
         /// </summary>
-        void Save(IProjection projection);
+        void Save(Projection projection);
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Load the projection by identifier.
         /// </summary>
-        public IProjection Load(Guid id)
+        public Projection Load(Guid id)
         {
             return _db.ContainsKey(id) ? _db[id] : null;
         }
@@ -46,7 +46,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Save the projection for further loading by identifier.
         /// </summary>
-        public void Save(IProjection projection)
+        public void Save(Projection projection)
         {
             if (!_db.ContainsKey(projection.Id))
             {
@@ -58,6 +58,6 @@ namespace FrogsTalks.Application.Ports
             }
         }
 
-        private readonly Dictionary<Guid, IProjection> _db = new Dictionary<Guid, IProjection>();
+        private readonly Dictionary<Guid, Projection> _db = new Dictionary<Guid, Projection>();
     }
 }

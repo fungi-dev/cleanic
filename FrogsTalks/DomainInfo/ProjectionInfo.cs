@@ -18,7 +18,7 @@ namespace FrogsTalks.DomainInfo
         {
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
             var projectionTypeInfo = projectionType.GetTypeInfo();
-            if (!typeof(IProjection).GetTypeInfo().IsAssignableFrom(projectionTypeInfo))
+            if (!typeof(Projection).GetTypeInfo().IsAssignableFrom(projectionTypeInfo))
             {
                 throw new ArgumentException("Attempt to build projection model for non-projection type!");
             }
@@ -58,7 +58,7 @@ namespace FrogsTalks.DomainInfo
         /// <summary>
         /// Get action which apply data from event instance to passed projection.
         /// </summary>
-        public Action<IProjection, Event> GetEventApplier(Type eventType)
+        public Action<Projection, Event> GetEventApplier(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
             if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))

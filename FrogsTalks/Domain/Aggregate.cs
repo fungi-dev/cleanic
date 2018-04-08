@@ -12,10 +12,7 @@ namespace FrogsTalks.Domain
     /// </summary>
     public abstract class Aggregate : Entity
     {
-        protected Aggregate(Guid id)
-        {
-            Id = id;
-        }
+        protected Aggregate(Guid id) : base(id) { }
 
         /// <summary>
         /// The number of occured events.
@@ -33,12 +30,7 @@ namespace FrogsTalks.Domain
         /// <param name="history">Events to be applied.</param>
         public void LoadFromHistory(ICollection<Event> history)
         {
-            if (!history.Any()) return;
-
-            var initial = (InitialEvent)history.Single(_ => _ is InitialEvent);
-            Id = initial.AggregateId;
-
-            foreach (var e in history) Apply(e, true);
+            foreach (var @event in history) Apply(@event, true);
         }
 
         /// <summary>
@@ -49,6 +41,7 @@ namespace FrogsTalks.Domain
         /// <remarks>All events produced by aggregate should be passed into this method.</remarks>
         protected void Apply(Event @event)
         {
+            @event.AggregateId = Id;
             Apply(@event, false);
         }
 

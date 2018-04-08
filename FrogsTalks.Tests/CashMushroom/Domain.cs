@@ -5,6 +5,11 @@ using FrogsTalks.Domain;
 
 namespace FrogsTalks.CashMushroom
 {
+    public static class Constants
+    {
+        public static Guid TenantId = Guid.Parse("FAB82032-080A-4D37-9E62-DA9677043995");
+    }
+
     #region Aggregates
 
     public class Product : Aggregate
@@ -99,9 +104,10 @@ namespace FrogsTalks.CashMushroom
 
     #region Projections
 
-    public class Bill : IProjection
+    public class Bill : Projection
     {
-        public Guid Id { get; set; }
+        public Bill(Guid id) : base(id) { }
+
         public List<Party> Parties { get; } = new List<Party>();
 
         public class Party
@@ -122,17 +128,8 @@ namespace FrogsTalks.CashMushroom
 
         public static Guid GetId(Product.CostsRecorded e)
         {
-            return Tenant.Id;
+            return Constants.TenantId;
         }
-    }
-
-    #endregion
-
-    #region Constants
-
-    public static class Tenant
-    {
-        public static Guid Id = Guid.Parse("FAB82032-080A-4D37-9E62-DA9677043995");
     }
 
     #endregion

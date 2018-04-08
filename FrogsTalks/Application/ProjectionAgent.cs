@@ -32,22 +32,21 @@ namespace FrogsTalks.Application
             }
         }
 
-        private void RunProjectionUpdating(ProjectionInfo projectionInfo, Event @event)
+        private void RunProjectionUpdating(ProjectionInfo projectionInfo, Event e)
         {
-            var eventType = @event.GetType();
+            var eventType = e.GetType();
 
             var idExtractor = projectionInfo.GetIdFromEventExtractor(eventType);
-            var projectionId = idExtractor(@event);
+            var id = idExtractor(e);
 
-            var projection = _db.Load(projectionId);
+            var projection = _db.Load(id);
             if (projection == null)
             {
-                projection = (IProjection)Activator.CreateInstance(projectionInfo.Type);
-                projection.Id = projectionId;
+                projection = (Projection)Activator.CreateInstance(projectionInfo.Type, id);
             }
 
             var eventApplier = projectionInfo.GetEventApplier(eventType);
-            eventApplier(projection, @event);
+            eventApplier(projection, e);
 
             _db.Save(projection);
         }

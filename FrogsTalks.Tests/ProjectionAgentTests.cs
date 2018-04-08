@@ -32,7 +32,7 @@ namespace FrogsTalks
 
         private void ThereIsProjectionBuilderWithTwoEventApplierMethods()
         {
-            _projections = new[] { typeof(Projection) };
+            _projections = new[] { typeof(TestProjection) };
         }
 
         private void RequiredAdaptersAreCreated()
@@ -78,8 +78,8 @@ namespace FrogsTalks
 
         private void UpdatedProjectionPersisted()
         {
-            var fromDb = _readDb.Load(_1) as Projection;
-            var fromApp = _app.Get<Projection>(_1);
+            var fromDb = _readDb.Load(_1) as TestProjection;
+            var fromApp = _app.Get<TestProjection>(_1);
             fromDb.ShouldBe(fromApp);
             fromDb.ShouldNotBeNull();
             _projection = fromDb;
@@ -100,7 +100,7 @@ namespace FrogsTalks
         private InMemoryBus _bus;
         private ApplicationFacade _app;
         private Exception _exception;
-        private Projection _projection;
+        private TestProjection _projection;
         private readonly Guid _1 = Guid.NewGuid();
 
         #endregion
@@ -109,9 +109,10 @@ namespace FrogsTalks
 
         private class TestEvent : Event { }
 
-        private class Projection : IProjection
+        private class TestProjection : Projection
         {
-            public Guid Id { get; set; }
+            public TestProjection(Guid id) : base(id) { }
+
             public Boolean FirstMethodCalled { get; private set; }
             public Boolean SecondMethodCalled { get; private set; }
 
