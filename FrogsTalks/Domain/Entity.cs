@@ -8,7 +8,7 @@ namespace FrogsTalks.Domain
     /// </summary>
     public abstract class Entity : DomainObject
     {
-        protected Entity(Guid id)
+        protected Entity(String id)
         {
             Id = id;
         }
@@ -16,7 +16,7 @@ namespace FrogsTalks.Domain
         /// <summary>
         /// The unique identifier of the entity.
         /// </summary>
-        public Guid Id { get; }
+        public String Id { get; }
 
         protected override IEnumerable<Object> GetIdentityComponents()
         {

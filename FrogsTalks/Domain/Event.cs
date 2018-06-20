@@ -10,7 +10,7 @@ namespace FrogsTalks.Domain
         /// <summary>
         /// The unique identifier of the aggregate.
         /// </summary>
-        public Guid AggregateId { get; set; }
+        public String AggregateId { get; set; }
 
         public override String ToString()
         {

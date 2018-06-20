@@ -7,14 +7,14 @@ namespace FrogsTalks.CashMushroom
 {
     public static class Constants
     {
-        public static Guid TenantId = Guid.Parse("FAB82032-080A-4D37-9E62-DA9677043995");
+        public static String TenantId = "the one";
     }
 
     #region Aggregates
 
     public class Product : Aggregate
     {
-        public Product(Guid id) : base(id) { }
+        public Product(String id) : base(id) { }
 
         #region Behaviour
 
@@ -84,15 +84,11 @@ namespace FrogsTalks.CashMushroom
 
     #endregion
 
-    #region Commands
-
-    #endregion
-
     #region Projections
 
     public class Bill : Projection
     {
-        public Bill(Guid id) : base(id) { }
+        public Bill(String id) : base(id) { }
 
         public List<Party> Parties { get; } = new List<Party>();
 
@@ -112,7 +108,7 @@ namespace FrogsTalks.CashMushroom
             }
         }
 
-        public static Guid GetId(Product.CostsRecorded e)
+        public static String GetId(Product.CostsRecorded e)
         {
             return Constants.TenantId;
         }

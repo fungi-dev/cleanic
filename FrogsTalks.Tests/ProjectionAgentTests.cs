@@ -101,7 +101,7 @@ namespace FrogsTalks
         private ApplicationFacade _app;
         private Exception _exception;
         private TestProjection _projection;
-        private readonly Guid _1 = Guid.NewGuid();
+        private const String _1 = "1";
 
         #endregion
 
@@ -111,7 +111,7 @@ namespace FrogsTalks
 
         private class TestProjection : Projection
         {
-            public TestProjection(Guid id) : base(id) { }
+            public TestProjection(String id) : base(id) { }
 
             public Boolean FirstMethodCalled { get; private set; }
             public Boolean SecondMethodCalled { get; private set; }

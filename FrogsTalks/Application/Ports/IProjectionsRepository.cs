@@ -13,7 +13,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Load the projection by identifier.
         /// </summary>
-        Projection Load(Guid id);
+        Projection Load(String id);
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Load the projection by identifier.
         /// </summary>
-        public Projection Load(Guid id)
+        public Projection Load(String id)
         {
             return _db.ContainsKey(id) ? _db[id] : null;
         }
@@ -58,6 +58,6 @@ namespace FrogsTalks.Application.Ports
             }
         }
 
-        private readonly Dictionary<Guid, Projection> _db = new Dictionary<Guid, Projection>();
+        private readonly Dictionary<String, Projection> _db = new Dictionary<String, Projection>();
     }
 }

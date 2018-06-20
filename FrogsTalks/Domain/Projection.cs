@@ -7,6 +7,6 @@ namespace FrogsTalks.Domain
     /// </summary>
     public class Projection : Entity
     {
-        public Projection(Guid id) : base(id) { }
+        public Projection(String id) : base(id) { }
     }
 }

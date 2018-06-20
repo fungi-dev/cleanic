@@ -90,7 +90,7 @@ namespace FrogsTalks
         private InMemoryBus _bus;
         private ApplicationFacade _app;
 
-        private readonly Guid _1 = Guid.NewGuid();
+        private const String _1 = "1";
         private const String _whiskey = "Jack Daniel's";
         private const Decimal _2k = 2000;
         private const String _bob = "Bob";

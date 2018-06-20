@@ -38,7 +38,7 @@ namespace FrogsTalks.DomainInfo
                              let t = p[0].ParameterType
                              where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                              let r = m.ReturnType
-                             where r == typeof(Guid)
+                             where r == typeof(String)
                              where m.IsStatic
                              select new { T = t, M = m }).ToDictionary(x => x.T, x => x.M);
 
@@ -77,7 +77,7 @@ namespace FrogsTalks.DomainInfo
         /// <summary>
         /// Get action which extract projection identifier from passed event.
         /// </summary>
-        public Func<Event, Guid> GetIdFromEventExtractor(Type eventType)
+        public Func<Event, String> GetIdFromEventExtractor(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
             if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
@@ -89,7 +89,7 @@ namespace FrogsTalks.DomainInfo
             {
                 var t = e.GetType();
                 if (!_idExtractors.ContainsKey(t)) return e.AggregateId;
-                return (Guid)_idExtractors[t].Invoke(null, new Object[] { e });
+                return (String)_idExtractors[t].Invoke(null, new Object[] { e });
             };
         }
 

@@ -15,7 +15,7 @@ namespace FrogsTalks.Application.Ports
         /// </summary>
         /// <param name="id">Aggregate's identifier.</param>
         /// <returns>All aggregate's events ordered by time.</returns>
-        Event[] Load(Guid id);
+        Event[] Load(String id);
 
         /// <summary>
         /// Save events for the aggregate.
@@ -23,7 +23,7 @@ namespace FrogsTalks.Application.Ports
         /// <param name="id">Aggregate's identifier.</param>
         /// <param name="eventsLoaded">Number of occurred events in the moment when the aggregate was loaded.</param>
         /// <param name="newEvents">The events to be saved.</param>
-        void Save(Guid id, Int32 eventsLoaded, Event[] newEvents);
+        void Save(String id, Int32 eventsLoaded, Event[] newEvents);
     }
 
     /// <summary>
@@ -35,19 +35,19 @@ namespace FrogsTalks.Application.Ports
     public sealed class InMemoryEventStore : IEventStore
     {
         /// <inheritdoc />
-        public Event[] Load(Guid id)
+        public Event[] Load(String id)
         {
             return _db.ContainsKey(id) ? _db[id].ToArray() : Array.Empty<Event>();
         }
 
         /// <inheritdoc />
-        public void Save(Guid id, Int32 eventsLoaded, Event[] newEvents)
+        public void Save(String id, Int32 eventsLoaded, Event[] newEvents)
         {
             if (!_db.ContainsKey(id)) _db.Add(id, new List<Event>());
             if (_db[id].Count != eventsLoaded) throw new Exception("Concurrency conflict: cannot persist these events!");
             _db[id].AddRange(newEvents);
         }
 
-        private readonly Dictionary<Guid, List<Event>> _db = new Dictionary<Guid, List<Event>>();
+        private readonly Dictionary<String, List<Event>> _db = new Dictionary<String, List<Event>>();
     }
 }

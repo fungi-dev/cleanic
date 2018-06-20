@@ -35,7 +35,7 @@ namespace FrogsTalks.Application
         /// </summary>
         /// <typeparam name="T">Projection type.</typeparam>
         /// <param name="id">Identifier of projection instance.</param>
-        public T Get<T>(Guid id) where T : Projection
+        public T Get<T>(String id) where T : Projection
         {
             return (T)_db.Load(id);
         }
