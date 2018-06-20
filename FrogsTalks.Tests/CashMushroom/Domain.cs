@@ -18,23 +18,16 @@ namespace FrogsTalks.CashMushroom
 
         #region Behaviour
 
-        public void Purchase(String name)
+        public void Do(RecordCosts cmd)
         {
-            if (Version > 0) throw new ProductAlreadyPurchased();
-
-            Apply(new ProductPurchased { AggregateId = Id, Name = name });
-        }
-
-        public void RecordCosts(Decimal cost, String buyer, IEnumerable<String> payers)
-        {
-            if (Version == 0) throw new ProductIsNotPurchasedYet();
+            if (Version == 0) Apply(new ProductPurchased { AggregateId = Id, Name = cmd.Name });
 
             Apply(new CostsRecorded
             {
                 AggregateId = Id,
-                Cost = cost,
-                Buyer = buyer,
-                Payers = payers.ToArray()
+                Cost = cmd.Cost,
+                Buyer = cmd.Buyer,
+                Payers = cmd.Payers.ToArray()
             });
         }
 
@@ -56,6 +49,14 @@ namespace FrogsTalks.CashMushroom
         public class Friend : ValueObject
         {
             public String Name { get; set; }
+        }
+
+        public class RecordCosts : Command
+        {
+            public String Name { get; set; }
+            public Decimal Cost { get; set; }
+            public String Buyer { get; set; }
+            public String[] Payers { get; set; }
         }
 
         #endregion
@@ -84,21 +85,6 @@ namespace FrogsTalks.CashMushroom
     #endregion
 
     #region Commands
-
-    public class RecordCosts : Command<Product>
-    {
-        public Guid Id { get; set; }
-        public String Name { get; set; }
-        public Decimal Cost { get; set; }
-        public String Buyer { get; set; }
-        public String[] Payers { get; set; }
-
-        public override void Run(Product product)
-        {
-            product.Purchase(Name);
-            product.RecordCosts(Cost, Buyer, Payers);
-        }
-    }
 
     #endregion
 

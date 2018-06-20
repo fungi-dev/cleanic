@@ -12,9 +12,4 @@ namespace FrogsTalks.Domain
         /// </summary>
         public Guid AggregateId { get; set; }
     }
-
-    public abstract class Command<T> : Command where T : Aggregate
-    {
-        public abstract void Run(T aggregate);
-    }
 }

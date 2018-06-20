@@ -30,6 +30,11 @@ namespace FrogsTalks.Domain
         /// <param name="history">Events to be applied.</param>
         public void LoadFromHistory(ICollection<Event> history)
         {
+            if (history.Any(_ => _.AggregateId != Id))
+            {
+                throw new Exception("Attempt to apply foreign events to aggregate!");
+            }
+
             foreach (var @event in history) Apply(@event, true);
         }
 
