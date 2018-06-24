@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 using FrogsTalks.DomainInfo;
@@ -32,14 +33,14 @@ namespace FrogsTalks.Application
             }
         }
 
-        private void RunProjectionUpdating(ProjectionInfo projectionInfo, Event e)
+        private async Task RunProjectionUpdating(ProjectionInfo projectionInfo, Event e)
         {
             var eventType = e.GetType();
 
             var idExtractor = projectionInfo.GetIdFromEventExtractor(eventType);
             var id = idExtractor(e);
 
-            var projection = (Projection)_db.Load(id, projectionInfo.Type);
+            var projection = (Projection)await _db.Load(id, projectionInfo.Type);
             if (projection == null)
             {
                 projection = (Projection)Activator.CreateInstance(projectionInfo.Type, id);
@@ -48,7 +49,7 @@ namespace FrogsTalks.Application
             var eventApplier = projectionInfo.GetEventApplier(eventType);
             eventApplier(projection, e);
 
-            _db.Save(projection);
+            await _db.Save(projection);
         }
 
         private readonly Repository _db;

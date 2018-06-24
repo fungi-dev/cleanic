@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using FrogsTalks.Application;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
@@ -76,10 +77,10 @@ namespace FrogsTalks
             _exception.ShouldBeNull();
         }
 
-        private void UpdatedProjectionPersisted()
+        private async Task UpdatedProjectionPersisted()
         {
-            var fromDb = (TestProjection)_db.Load(_1, typeof(TestProjection));
-            var fromApp = _app.Get<TestProjection>(_1);
+            var fromDb = (TestProjection)await _db.Load(_1, typeof(TestProjection));
+            var fromApp = await _app.Get<TestProjection>(_1);
             fromDb.ShouldBe(fromApp);
             fromDb.ShouldNotBeNull();
             _projection = fromDb;

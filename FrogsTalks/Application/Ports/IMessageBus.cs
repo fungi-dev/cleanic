@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application.Ports
@@ -12,24 +13,24 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        void Send(Command command);
+        Task Send(Command command);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        void HandleCommands(Action<Command> handler);
+        void HandleCommands(Func<Command, Task> handler);
 
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        void Publish(Event @event);
+        Task Publish(Event @event);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        void ListenEvent(Type eventType, Action<Event> listener);
+        void ListenEvent(Type eventType, Func<Event, Task> listener);
     }
 
     /// <summary>
@@ -47,32 +48,32 @@ namespace FrogsTalks.Application.Ports
         {
             _busy = false;
             _queue = new Queue<Object>();
-            _eventSubscribers = new Dictionary<Type, List<Action<Event>>>();
+            _eventSubscribers = new Dictionary<Type, List<Func<Event, Task>>>();
         }
 
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        public void Send(Command command)
+        public async Task Send(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
-            Handle(command);
+            await Handle(command);
         }
 
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        public void Publish(Event @event)
+        public async Task Publish(Event @event)
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
-            Handle(@event);
+            await Handle(@event);
         }
 
         /// <summary>
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        public void HandleCommands(Action<Command> handler)
+        public void HandleCommands(Func<Command, Task> handler)
         {
             if (_commandHandler != null) throw new Exception("Handler already registered!");
             _commandHandler = handler;
@@ -82,14 +83,14 @@ namespace FrogsTalks.Application.Ports
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        public void ListenEvent(Type eventType, Action<Event> listener)
+        public void ListenEvent(Type eventType, Func<Event, Task> listener)
         {
-            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Action<Event>>());
+            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<Event, Task>>());
             var current = _eventSubscribers[eventType];
             if (!current.Contains(listener)) current.Add(listener);
         }
 
-        private void Handle(Object message)
+        private async Task Handle(Object message)
         {
             _queue.Enqueue(message);
             if (_busy) return;
@@ -97,7 +98,7 @@ namespace FrogsTalks.Application.Ports
             try
             {
                 _busy = true;
-                HandleQueue();
+                await HandleQueue();
             }
             finally
             {
@@ -105,7 +106,7 @@ namespace FrogsTalks.Application.Ports
             }
         }
 
-        private void HandleQueue()
+        private async Task HandleQueue()
         {
             while (true)
             {
@@ -116,17 +117,17 @@ namespace FrogsTalks.Application.Ports
                 if (message is Command)
                 {
                     if (_commandHandler == null) throw new Exception("Can't find command handler!");
-                    _commandHandler((Command)message);
+                    await _commandHandler((Command)message);
                 }
 
                 if (message is Event)
                 {
                     if (_eventSubscribers.ContainsKey(type))
                     {
-                        var handlers = new List<Action<Event>>(_eventSubscribers[type]);
+                        var handlers = new List<Func<Event, Task>>(_eventSubscribers[type]);
                         foreach (var handler in handlers)
                         {
-                            handler((Event)message);
+                            await handler((Event)message);
                         }
                     }
                 }
@@ -135,7 +136,7 @@ namespace FrogsTalks.Application.Ports
 
         private Boolean _busy;
         private readonly Queue<Object> _queue;
-        private Action<Command> _commandHandler;
-        private readonly Dictionary<Type, List<Action<Event>>> _eventSubscribers;
+        private Func<Command, Task> _commandHandler;
+        private readonly Dictionary<Type, List<Func<Event, Task>>> _eventSubscribers;
     }
 }

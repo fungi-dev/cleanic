@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using FrogsTalks.Application;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.CashMushroom;
@@ -24,7 +25,7 @@ namespace FrogsTalks
                 .And(_ => _.ApplicationFacadeIsCreated())
                 .When(_ => _.YouSendSomeCommand())
                 .Then(_ => _.AppropriateProjectionIsBuilt())
-                .BDDfy();
+                .LazyBDDfy();
         }
 
         #region Given steps
@@ -54,7 +55,7 @@ namespace FrogsTalks
 
         #region When steps
 
-        private void YouSendSomeCommand()
+        private async Task YouSendSomeCommand()
         {
             var cmd = new Product.RecordCosts
             {
@@ -64,16 +65,16 @@ namespace FrogsTalks
                 Cost = _2k,
                 Name = _whiskey
             };
-            _app.Do(cmd);
+            await _app.Do(cmd);
         }
 
         #endregion
 
         #region Then steps
 
-        private void AppropriateProjectionIsBuilt()
+        private async Task AppropriateProjectionIsBuilt()
         {
-            var bill = _app.Get<Bill>(Constants.TenantId);
+            var bill = await _app.Get<Bill>(Constants.TenantId);
             var bobPart = bill.Parties.Single(x => x.Name == _bob);
             bobPart.Total.ShouldBe(_2k);
             var otherParts = bill.Parties.Where(x => x.Name != _bob);

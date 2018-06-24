@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 
@@ -78,15 +79,15 @@ namespace FrogsTalks.Application
         private readonly Repository _db;
         private readonly Type[] _aggregates;
 
-        private void HandleCommand(Command cmd)
+        private async Task HandleCommand(Command cmd)
         {
             var aggType = GetAggregateTypeForCommand(cmd.GetType());
-            var agg = (Aggregate)_db.Load(cmd.AggregateId, aggType);
+            var agg = (Aggregate)await _db.Load(cmd.AggregateId, aggType);
 
             var newEvents = ProduceEvents(agg, cmd);
-            if (newEvents.Length > 0) _db.Save(agg);
+            if (newEvents.Length > 0) await _db.Save(agg);
 
-            foreach (var e in newEvents) _bus.Publish(e);
+            foreach (var e in newEvents) await _bus.Publish(e);
         }
 
         #endregion

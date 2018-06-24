@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 
@@ -14,36 +15,35 @@ namespace FrogsTalks.Application
             _states = states;
         }
 
-        public Entity Load(String id, Type type)
+        public async Task<Entity> Load(String id, Type type)
         {
             if (!type.GetTypeInfo().IsSubclassOf(typeof(Aggregate)))
             {
-                return _states.Load(id, type);
+                return await _states.Load(id, type);
             }
 
             var agg = (Aggregate)Activator.CreateInstance(type, id);
-            var persistedEvents = _events.Load(id);
+            var persistedEvents = await _events.Load(id);
             agg.LoadFromHistory(persistedEvents);
             return agg;
         }
 
-        public T Load<T>(String id) where T : Entity
+        public async Task<T> Load<T>(String id) where T : Entity
         {
-            return (T)Load(id, typeof(T));
+            return (T)await Load(id, typeof(T));
         }
 
-        public void Save(Entity entity)
+        public async Task Save(Entity entity)
         {
             if (!entity.GetType().GetTypeInfo().IsSubclassOf(typeof(Aggregate)))
             {
-                _states.Save(entity);
-                return;
+                await _states.Save(entity);
             }
 
             var agg = (Aggregate)entity;
             var newEvents = agg.FreshChanges.ToArray();
             var persistedVersion = agg.Version - newEvents.Length;
-            _events.Save(agg.Id, persistedVersion, newEvents);
+            await _events.Save(agg.Id, persistedVersion, newEvents);
         }
 
         #region Internals

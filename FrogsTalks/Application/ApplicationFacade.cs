@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 
@@ -24,10 +25,10 @@ namespace FrogsTalks.Application
         /// Order the application to do something.
         /// </summary>
         /// <param name="command">Command details.</param>
-        public void Do(Command command)
+        public async Task Do(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
-            _bus.Send(command);
+            await _bus.Send(command);
         }
 
         /// <summary>
@@ -35,10 +36,10 @@ namespace FrogsTalks.Application
         /// </summary>
         /// <typeparam name="T">Projection type.</typeparam>
         /// <param name="id">Identifier of projection instance.</param>
-        public T Get<T>(String id) where T : Projection
+        public async Task<T> Get<T>(String id) where T : Projection
         {
             var type = typeof(T);
-            return (T)_db.Load(id, type);
+            return (T)await _db.Load(id, type);
         }
 
         private readonly IMessageBus _bus;

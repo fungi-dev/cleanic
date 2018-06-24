@@ -1,23 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application.Ports
 {
     public interface IStateStore
     {
-        Entity Load(String id, Type entityType);
-        void Save(Entity entity);
+        Task<Entity> Load(String id, Type entityType);
+        Task Save(Entity entity);
     }
 
     public class InMemoryStateStore : IStateStore
     {
-        public Entity Load(String id, Type entityType)
+        public Task<Entity> Load(String id, Type entityType)
         {
-            return _db.ContainsKey(id) ? _db[id] : null;
+            return Task.FromResult(_db.ContainsKey(id) ? _db[id] : null);
         }
 
-        public void Save(Entity entity)
+        public Task Save(Entity entity)
         {
             if (!_db.ContainsKey(entity.Id))
             {
@@ -27,6 +28,8 @@ namespace FrogsTalks.Application.Ports
             {
                 _db[entity.Id] = entity;
             }
+
+            return Task.CompletedTask;
         }
 
         private readonly Dictionary<String, Entity> _db = new Dictionary<String, Entity>();
