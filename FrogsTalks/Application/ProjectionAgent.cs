@@ -18,7 +18,7 @@ namespace FrogsTalks.Application
         /// <param name="bus">Bus to catch events.</param>
         /// <param name="db">Place to store built projections.</param>
         /// <param name="projections">All projections which will be building.</param>
-        public ProjectionAgent(IMessageBus bus, IProjectionsRepository db, params Type[] projections)
+        public ProjectionAgent(IMessageBus bus, Repository db, params Type[] projections)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -39,7 +39,7 @@ namespace FrogsTalks.Application
             var idExtractor = projectionInfo.GetIdFromEventExtractor(eventType);
             var id = idExtractor(e);
 
-            var projection = _db.Load(id);
+            var projection = (Projection)_db.Load(id, projectionInfo.Type);
             if (projection == null)
             {
                 projection = (Projection)Activator.CreateInstance(projectionInfo.Type, id);
@@ -51,6 +51,6 @@ namespace FrogsTalks.Application
             _db.Save(projection);
         }
 
-        private readonly IProjectionsRepository _db;
+        private readonly Repository _db;
     }
 }

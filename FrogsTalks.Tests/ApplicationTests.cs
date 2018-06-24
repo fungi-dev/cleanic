@@ -31,24 +31,23 @@ namespace FrogsTalks
 
         private void RequiredAdaptersAreCreated()
         {
-            _writeDb = new InMemoryEventStore();
-            _readDb = new InMemoryStateStore();
+            _db = new Repository(new InMemoryEventStore(), new InMemoryStateStore());
             _bus = new InMemoryBus();
         }
 
         private void WriteBackendIsCreated()
         {
-            new LogicAgent(_bus, _writeDb, typeof(Product));
+            new LogicAgent(_bus, _db, typeof(Product));
         }
 
         private void ReadBackendIsCreated()
         {
-            new ProjectionAgent(_bus, _readDb, typeof(Bill));
+            new ProjectionAgent(_bus, _db, typeof(Bill));
         }
 
         private void ApplicationFacadeIsCreated()
         {
-            _app = new ApplicationFacade(_bus, _readDb);
+            _app = new ApplicationFacade(_bus, _db);
         }
 
         #endregion
@@ -85,8 +84,7 @@ namespace FrogsTalks
 
         #region Shared data
 
-        private InMemoryEventStore _writeDb;
-        private InMemoryStateStore _readDb;
+        private Repository _db;
         private InMemoryBus _bus;
         private ApplicationFacade _app;
 

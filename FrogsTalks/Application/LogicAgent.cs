@@ -17,7 +17,8 @@ namespace FrogsTalks.Application
         /// </summary>
         /// <param name="bus">Bus to catch commands and to publish events.</param>
         /// <param name="db">Storage to place produced events.</param>
-        public LogicAgent(IMessageBus bus, IEventStore db, params Type[] aggregates)
+        /// <param name="aggregates">All aggregates which implement domain logic.</param>
+        public LogicAgent(IMessageBus bus, Repository db, params Type[] aggregates)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -71,25 +72,23 @@ namespace FrogsTalks.Application
             return aggregate.FreshChanges.ToArray();
         }
 
+        #region Internals
+
         private readonly IMessageBus _bus;
-        private readonly IEventStore _db;
+        private readonly Repository _db;
         private readonly Type[] _aggregates;
 
         private void HandleCommand(Command cmd)
         {
             var aggType = GetAggregateTypeForCommand(cmd.GetType());
-            var agg = (Aggregate)Activator.CreateInstance(aggType, cmd.AggregateId);
-            var persistedEvents = _db.Load(cmd.AggregateId);
-            agg.LoadFromHistory(persistedEvents);
+            var agg = (Aggregate)_db.Load(cmd.AggregateId, aggType);
 
             var newEvents = ProduceEvents(agg, cmd);
-            if (newEvents.Length > 0)
-            {
-                var persistedVersion = agg.Version - newEvents.Length;
-                _db.Save(agg.Id, persistedVersion, newEvents);
-            }
+            if (newEvents.Length > 0) _db.Save(agg);
 
             foreach (var e in newEvents) _bus.Publish(e);
         }
+
+        #endregion
     }
 }

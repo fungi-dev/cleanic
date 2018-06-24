@@ -46,7 +46,7 @@ namespace FrogsTalks.DomainInfo
         }
 
         /// <summary>
-        /// Underlying CLR type of projection.
+        /// Underlying CLR type of projection class.
         /// </summary>
         public Type Type { get; }
 

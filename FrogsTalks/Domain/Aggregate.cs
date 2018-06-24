@@ -44,6 +44,7 @@ namespace FrogsTalks.Domain
         /// And update aggregate's state if needed.
         /// </summary>
         /// <remarks>All events produced by aggregate should be passed into this method.</remarks>
+        /// <param name="event">AggregateId will be set by aggregate itself.</param>
         protected void Apply(Event @event)
         {
             @event.AggregateId = Id;

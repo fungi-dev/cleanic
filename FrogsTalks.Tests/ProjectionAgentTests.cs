@@ -37,18 +37,18 @@ namespace FrogsTalks
 
         private void RequiredAdaptersAreCreated()
         {
-            _readDb = new InMemoryStateStore();
+            _db = new Repository(new InMemoryEventStore(), new InMemoryStateStore());
             _bus = new InMemoryBus();
         }
 
         private void ReadBackendIsCreated()
         {
-            new ProjectionAgent(_bus, _readDb, _projections);
+            new ProjectionAgent(_bus, _db, _projections);
         }
 
         private void ApplicationFacadeIsCreated()
         {
-            _app = new ApplicationFacade(_bus, _readDb);
+            _app = new ApplicationFacade(_bus, _db);
         }
 
         #endregion
@@ -78,7 +78,7 @@ namespace FrogsTalks
 
         private void UpdatedProjectionPersisted()
         {
-            var fromDb = _readDb.Load(_1) as TestProjection;
+            var fromDb = (TestProjection)_db.Load(_1, typeof(TestProjection));
             var fromApp = _app.Get<TestProjection>(_1);
             fromDb.ShouldBe(fromApp);
             fromDb.ShouldNotBeNull();
@@ -96,7 +96,7 @@ namespace FrogsTalks
         #region Shared data
 
         private Type[] _projections;
-        private InMemoryStateStore _readDb;
+        private Repository _db;
         private InMemoryBus _bus;
         private ApplicationFacade _app;
         private Exception _exception;

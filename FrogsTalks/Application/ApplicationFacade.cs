@@ -14,7 +14,7 @@ namespace FrogsTalks.Application
         /// </summary>
         /// <param name="bus">Bus where user commands will be sent.</param>
         /// <param name="db">Storage where queried data will be taken.</param>
-        public ApplicationFacade(IMessageBus bus, IProjectionsReader db)
+        public ApplicationFacade(IMessageBus bus, Repository db)
         {
             _bus = bus;
             _db = db;
@@ -37,10 +37,11 @@ namespace FrogsTalks.Application
         /// <param name="id">Identifier of projection instance.</param>
         public T Get<T>(String id) where T : Projection
         {
-            return (T)_db.Load(id);
+            var type = typeof(T);
+            return (T)_db.Load(id, type);
         }
 
         private readonly IMessageBus _bus;
-        private readonly IProjectionsReader _db;
+        private readonly Repository _db;
     }
 }
