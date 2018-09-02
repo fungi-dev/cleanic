@@ -38,6 +38,7 @@ namespace FrogsTalks.Application
             if (!entity.GetType().GetTypeInfo().IsSubclassOf(typeof(Aggregate)))
             {
                 await _states.Save(entity);
+                return;
             }
 
             var agg = (Aggregate)entity;
