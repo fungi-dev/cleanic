@@ -14,17 +14,19 @@ namespace FrogsTalks.Application.Ports
         /// <summary>
         /// Load all events for the aggregate.
         /// </summary>
-        /// <param name="id">Aggregate's identifier.</param>
+        /// <param name="aggregateId">Aggregate's identifier.</param>
         /// <returns>All aggregate's events ordered by time.</returns>
-        Task<Event[]> Load(String id);
+        Task<Event[]> Load(String aggregateId);
 
         /// <summary>
         /// Save events for the aggregate.
         /// </summary>
-        /// <param name="id">Aggregate's identifier.</param>
-        /// <param name="eventsLoaded">Number of occurred events in the moment when the aggregate was loaded.</param>
+        /// <param name="aggregateId">Aggregate's identifier.</param>
+        /// <param name="lastVersion">Number of occurred events in the moment when the aggregate was loaded.</param>
         /// <param name="newEvents">The events to be saved.</param>
-        Task Save(String id, Int32 eventsLoaded, Event[] newEvents);
+        Task Save(String aggregateId, UInt32 lastVersion, Event[] newEvents);
+
+        Task Clear();
     }
 
     /// <summary>
@@ -36,18 +38,25 @@ namespace FrogsTalks.Application.Ports
     public sealed class InMemoryEventStore : IEventStore
     {
         /// <inheritdoc />
-        public Task<Event[]> Load(String id)
+        public Task<Event[]> Load(String aggregateId)
         {
-            return Task.FromResult(_db.ContainsKey(id) ? _db[id].ToArray() : Array.Empty<Event>());
+            return Task.FromResult(_db.ContainsKey(aggregateId) ? _db[aggregateId].ToArray() : Array.Empty<Event>());
         }
 
         /// <inheritdoc />
-        public Task Save(String id, Int32 eventsLoaded, Event[] newEvents)
+        public Task Save(String aggregateId, UInt32 lastVersion, Event[] newEvents)
         {
-            if (!_db.ContainsKey(id)) _db.Add(id, new List<Event>());
-            if (_db[id].Count != eventsLoaded) throw new Exception("Concurrency conflict: cannot persist these events!");
-            _db[id].AddRange(newEvents);
+            if (!_db.ContainsKey(aggregateId)) _db.Add(aggregateId, new List<Event>());
+            var savedVersion = Convert.ToUInt32(_db[aggregateId].Count);
+            if (savedVersion != lastVersion) throw new Exception("Concurrency conflict: cannot persist these events!");
+            _db[aggregateId].AddRange(newEvents);
 
+            return Task.CompletedTask;
+        }
+
+        public Task Clear()
+        {
+            _db.Clear();
             return Task.CompletedTask;
         }
 
