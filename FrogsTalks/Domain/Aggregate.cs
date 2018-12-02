@@ -17,7 +17,7 @@ namespace FrogsTalks.Domain
         /// <summary>
         /// The number of occured events.
         /// </summary>
-        public Int32 Version { get; private set; }
+        public UInt32 Version { get; private set; }
 
         /// <summary>
         /// Events which haven't been persisted yet.
@@ -35,7 +35,7 @@ namespace FrogsTalks.Domain
                 throw new Exception("Attempt to apply foreign events to aggregate!");
             }
 
-            foreach (var @event in history) Apply(@event, true);
+            foreach (var @event in history) Apply(@event, false);
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace FrogsTalks.Domain
         protected void Apply(Event @event)
         {
             @event.AggregateId = Id;
-            Apply(@event, false);
+            Apply(@event, true);
         }
 
         /// <summary>
@@ -67,13 +67,13 @@ namespace FrogsTalks.Domain
 
         private readonly List<Event> _changes = new List<Event>();
 
-        private void Apply(Event @event, Boolean isPersisted)
+        private void Apply(Event @event, Boolean isFresh)
         {
             var applier = GetApplierOfConcreteEvent(@event.GetType());
             applier?.Invoke(this, new Object[] { @event });
             Version++;
 
-            if (!isPersisted) _changes.Add(@event);
+            if (isFresh) _changes.Add(@event);
         }
     }
 }

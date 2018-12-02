@@ -43,7 +43,7 @@ namespace FrogsTalks.Application
 
             var agg = (Aggregate)entity;
             var newEvents = agg.FreshChanges.ToArray();
-            var persistedVersion = agg.Version - newEvents.Length;
+            var persistedVersion = Convert.ToUInt32(agg.Version - newEvents.Length);
             await _events.Save(agg.Id, persistedVersion, newEvents);
         }
 

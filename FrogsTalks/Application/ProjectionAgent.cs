@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
@@ -18,13 +17,13 @@ namespace FrogsTalks.Application
         /// </summary>
         /// <param name="bus">Bus to catch events.</param>
         /// <param name="db">Place to store built projections.</param>
-        /// <param name="projections">All projections which will be building.</param>
-        public ProjectionAgent(IMessageBus bus, Repository db, params Type[] projections)
+        /// <param name="domainInfo">Domain projections in which should be tracked.</param>
+        public ProjectionAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
 
-            foreach (var p in projections.Select(x => new ProjectionInfo(x)))
+            foreach (var p in domainInfo.Projections)
             {
                 foreach (var eventType in p.InfluencingEventTypes)
                 {

@@ -18,5 +18,5 @@ namespace FrogsTalks.Domain
         }
     }
 
-    public abstract class InitialEvent : Event { }
+    public abstract class FirstEvent : Event { }
 }
