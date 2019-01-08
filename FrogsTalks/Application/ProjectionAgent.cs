@@ -1,8 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using FrogsTalks.Application.Ports;
+﻿using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
 using FrogsTalks.DomainInfo;
+using System;
+using System.Threading.Tasks;
 
 namespace FrogsTalks.Application
 {
@@ -10,7 +10,7 @@ namespace FrogsTalks.Application
     /// Agent behind the bus who updates domain projections when events occurred.
     /// </summary>
     /// <remarks>There can be many projection agent instances for one facade.</remarks>
-    public class ProjectionAgent
+    internal class ProjectionAgent
     {
         /// <summary>
         /// Create an instance of the application projection agent.

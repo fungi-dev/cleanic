@@ -1,25 +1,31 @@
-﻿using System;
-using System.Threading.Tasks;
-using FrogsTalks.Application.Ports;
+﻿using FrogsTalks.Application.Ports;
 using FrogsTalks.Domain;
+using System;
+using System.Threading.Tasks;
 
 namespace FrogsTalks.Application
 {
     /// <summary>
     /// Facade for interact with the application.
     /// </summary>
-    public class ApplicationFacade
+    public abstract class Application
     {
-        /// <summary>
-        /// Create an instance of the application facade.
-        /// </summary>
-        /// <param name="bus">Bus where user commands will be sent.</param>
-        /// <param name="db">Storage where queried data will be taken.</param>
-        public ApplicationFacade(IMessageBus bus, Repository db)
+        protected Application(
+            IMessageBus bus,
+            IEventStore events,
+            IStateStore states,
+            DomainInfo.DomainInfo domain,
+            Func<Type, IDomainService> domainServiceFactory)
         {
             _bus = bus;
-            _db = db;
+            Repository = new Repository(events, states);
+            Domain = domain;
+            new LogicAgent(bus, Repository, domain, domainServiceFactory);
+            new ProjectionAgent(bus, Repository, domain);
         }
+
+        public DomainInfo.DomainInfo Domain { get; }
+        protected Repository Repository { get; }
 
         /// <summary>
         /// Order the application to do something.
@@ -39,10 +45,9 @@ namespace FrogsTalks.Application
         public async Task<T> Get<T>(String id) where T : Projection
         {
             var type = typeof(T);
-            return (T)await _db.Load(id, type);
+            return (T)await Repository.Load(id, type);
         }
 
         private readonly IMessageBus _bus;
-        private readonly Repository _db;
     }
 }

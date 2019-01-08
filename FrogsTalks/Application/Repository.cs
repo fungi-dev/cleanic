@@ -1,9 +1,9 @@
-﻿using System;
+﻿using FrogsTalks.Application.Ports;
+using FrogsTalks.Domain;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using FrogsTalks.Application.Ports;
-using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application
 {
@@ -42,6 +42,7 @@ namespace FrogsTalks.Application
             }
 
             var agg = (Aggregate)entity;
+            if (!agg.FreshChanges.Any()) throw new Exception("There is nothing to save!");
             var newEvents = agg.FreshChanges.ToArray();
             var persistedVersion = Convert.ToUInt32(agg.Version - newEvents.Length);
             await _events.Save(agg.Id, persistedVersion, newEvents);

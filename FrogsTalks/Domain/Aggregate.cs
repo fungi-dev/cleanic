@@ -24,6 +24,8 @@ namespace FrogsTalks.Domain
         /// </summary>
         public IEnumerable<Event> FreshChanges => _changes;
 
+        public Command[] FreshCommands { get; private set; } = new Command[0];
+
         /// <summary>
         /// Lead the aggregate to state when all events have been applied.
         /// </summary>
@@ -49,6 +51,13 @@ namespace FrogsTalks.Domain
         {
             @event.AggregateId = Id;
             Apply(@event, true);
+        }
+
+        protected void Forward(Command cmd)
+        {
+            var list = FreshCommands.ToList();
+            list.Add(cmd);
+            FreshCommands = list.ToArray();
         }
 
         /// <summary>

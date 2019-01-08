@@ -15,18 +15,12 @@ namespace FrogsTalks.Application
     /// <remarks>There can be many logic agent instances for one facade.</remarks>
     public class LogicAgent
     {
-        /// <summary>
-        /// Create an instance of the application logic agent.
-        /// </summary>
-        /// <param name="bus">Bus to catch commands and to publish events.</param>
-        /// <param name="db">Storage to place produced events.</param>
-        /// <param name="domainInfo">Domain which logic should be applied.</param>
         public LogicAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo, Func<Type, IDomainService> domainServiceFactory)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _aggregates = domainInfo.Aggregates.Select(x => x.Type).ToArray();
-            _factory = domainServiceFactory;
+            _services = domainServiceFactory;
 
             bus.HandleCommands(HandleCommand);
             foreach (var s in domainInfo.Sagas)
@@ -49,6 +43,7 @@ namespace FrogsTalks.Application
             if (newEvents.Length > 0) await _db.Save(agg);
 
             foreach (var e in newEvents) await _bus.Publish(e);
+            foreach (var c in agg.FreshCommands) await _bus.Send(c);
         }
 
         private async Task RunSaga(SagaInfo sagaInfo, Event e)
@@ -86,7 +81,7 @@ namespace FrogsTalks.Application
             if (handlers.Length > 1) throw new Exception($"There is multple handlers for \"{cmdType}\" in \"{aggType}\"!");
             var handler = handlers.Single();
 
-            var servicesForHandler = handler.GetParameters().Skip(1).Select(x => _factory(x.ParameterType));
+            var servicesForHandler = handler.GetParameters().Skip(1).Select(x => _services(x.ParameterType));
             var handlerParams = new List<Object> { command };
             handlerParams.AddRange(servicesForHandler);
             return () => (Task)handler.Invoke(aggregate, handlerParams.ToArray());
@@ -106,7 +101,7 @@ namespace FrogsTalks.Application
             if (handlers.Length > 1) throw new Exception($"There is multple handlers for \"{eType}\" in \"{sagaType}\"!");
             var handler = handlers.Single();
 
-            var aggregateForHandler = handler.GetParameters().Skip(1).Select(x => _factory(x.ParameterType));
+            var aggregateForHandler = handler.GetParameters().Skip(1).Select(x => _services(x.ParameterType));
 
             var handlerParams = new List<Object> { e };
             if (handler.GetParameters().Count() > 1) handlerParams.Add(agg);
@@ -116,6 +111,6 @@ namespace FrogsTalks.Application
         private readonly IMessageBus _bus;
         private readonly Repository _db;
         private readonly Type[] _aggregates;
-        private readonly Func<Type, IDomainService> _factory;
+        private readonly Func<Type, IDomainService> _services;
     }
 }
