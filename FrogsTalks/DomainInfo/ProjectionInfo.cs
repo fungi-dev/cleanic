@@ -24,6 +24,7 @@ namespace FrogsTalks.DomainInfo
             }
 
             _eventAppliers = (from m in projectionType.GetRuntimeMethods()
+                              where !m.IsStatic
                               let p = m.GetParameters()
                               where p.Length == 1
                               let t = p[0].ParameterType
