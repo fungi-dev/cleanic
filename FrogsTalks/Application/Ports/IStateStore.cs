@@ -1,7 +1,7 @@
-﻿using System;
+﻿using FrogsTalks.Domain;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FrogsTalks.Domain;
 
 namespace FrogsTalks.Application.Ports
 {
@@ -16,18 +16,25 @@ namespace FrogsTalks.Application.Ports
     {
         public Task<Entity> Load(String entityId, Type entityType)
         {
-            return Task.FromResult(_db.ContainsKey(entityId) ? _db[entityId] : null);
+            if (!_db.ContainsKey(entityType)) return Task.FromResult<Entity>(null);
+
+            return Task.FromResult(_db[entityType].ContainsKey(entityId) ? _db[entityType][entityId] : null);
         }
 
         public Task Save(Entity entity)
         {
-            if (!_db.ContainsKey(entity.Id))
+            if (!_db.TryGetValue(entity.GetType(), out var entities))
             {
-                _db.Add(entity.Id, entity);
+                _db.Add(entity.GetType(), entities = new Dictionary<string, Entity>());
+            }
+
+            if (!entities.ContainsKey(entity.Id))
+            {
+                entities.Add(entity.Id, entity);
             }
             else
             {
-                _db[entity.Id] = entity;
+                entities[entity.Id] = entity;
             }
 
             return Task.CompletedTask;
@@ -39,6 +46,6 @@ namespace FrogsTalks.Application.Ports
             return Task.CompletedTask;
         }
 
-        private readonly Dictionary<String, Entity> _db = new Dictionary<String, Entity>();
+        private readonly Dictionary<Type, Dictionary<String, Entity>> _db = new Dictionary<Type, Dictionary<String, Entity>>();
     }
 }
