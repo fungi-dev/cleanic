@@ -12,6 +12,8 @@ namespace FrogsTalks.Domain
         /// </summary>
         public String AggregateId { get; set; }
 
+        public DateTime Moment { get; set; }
+
         public override String ToString()
         {
             return GetType().Name;

@@ -50,6 +50,7 @@ namespace FrogsTalks.Domain
         protected void Apply(Event @event)
         {
             @event.AggregateId = Id;
+            @event.Moment = DateTime.UtcNow;
             Apply(@event, true);
         }
 
