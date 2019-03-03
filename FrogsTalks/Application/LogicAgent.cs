@@ -1,5 +1,4 @@
-﻿using FrogsTalks.Application.Ports;
-using FrogsTalks.Domain;
+﻿using FrogsTalks.Domain;
 using FrogsTalks.DomainInfo;
 using System;
 using System.Collections.Generic;
