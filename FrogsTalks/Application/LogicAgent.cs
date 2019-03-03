@@ -15,7 +15,7 @@ namespace FrogsTalks.Application
     /// <remarks>There can be many logic agent instances for one facade.</remarks>
     public class LogicAgent
     {
-        public LogicAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo, Func<Type, IDomainService> domainServiceFactory)
+        public LogicAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo, Func<Type, IDomainService[]> domainServiceFactory)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -101,8 +101,6 @@ namespace FrogsTalks.Application
             if (handlers.Length > 1) throw new Exception($"There is multple handlers for \"{eType}\" in \"{sagaType}\"!");
             var handler = handlers.Single();
 
-            var aggregateForHandler = handler.GetParameters().Skip(1).Select(x => _services(x.ParameterType));
-
             var handlerParams = new List<Object> { e };
             if (handler.GetParameters().Count() > 1) handlerParams.Add(agg);
             return () => (Task<Command[]>)handler.Invoke(saga, handlerParams.ToArray());
@@ -111,6 +109,6 @@ namespace FrogsTalks.Application
         private readonly IMessageBus _bus;
         private readonly Repository _db;
         private readonly Type[] _aggregates;
-        private readonly Func<Type, IDomainService> _services;
+        private readonly Func<Type, IDomainService[]> _services;
     }
 }

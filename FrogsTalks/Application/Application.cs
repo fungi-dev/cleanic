@@ -15,7 +15,7 @@ namespace FrogsTalks.Application
             IEventStore events,
             IStateStore states,
             DomainInfo.DomainInfo domain,
-            Func<Type, IDomainService> domainServiceFactory)
+            Func<Type, IDomainService[]> domainServiceFactory)
         {
             _bus = bus;
             Repository = new Repository(events, states);
