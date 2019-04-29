@@ -12,23 +12,23 @@ namespace Cleanic.Application
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        Task Send(Command command);
+        Task Send(ICommand command);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        void HandleCommands(Func<Command, Task> handler);
+        void HandleCommands(Func<ICommand, Task> handler);
 
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        Task Publish(Event @event);
+        Task Publish(IEvent @event);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        void ListenEvent(Type eventType, Func<Event, Task> listener);
+        void ListenEvent(Type eventType, Func<IEvent, Task> listener);
     }
 }

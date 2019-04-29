@@ -18,7 +18,7 @@ namespace Cleanic.DomainInfo
         {
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
             var projectionTypeInfo = projectionType.GetTypeInfo();
-            if (!typeof(Projection).GetTypeInfo().IsAssignableFrom(projectionTypeInfo))
+            if (!typeof(IProjection).GetTypeInfo().IsAssignableFrom(projectionTypeInfo))
             {
                 throw new ArgumentException("Attempt to build projection model for non-projection type!");
             }
@@ -28,7 +28,7 @@ namespace Cleanic.DomainInfo
                               let p = m.GetParameters()
                               where p.Length == 1
                               let t = p[0].ParameterType
-                              where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                              where typeof(IEvent).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                               group m by t
                               into gm
                               select gm).ToDictionary(x => x.Key, x => x.ToArray());
@@ -38,7 +38,7 @@ namespace Cleanic.DomainInfo
                              let p = m.GetParameters()
                              where p.Length == 1
                              let t = p[0].ParameterType
-                             where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                             where typeof(IEvent).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                              let r = m.ReturnType
                              where r == typeof(String)
                              where m.IsStatic
@@ -60,10 +60,10 @@ namespace Cleanic.DomainInfo
         /// <summary>
         /// Get action which apply data from event instance to passed projection.
         /// </summary>
-        public Action<Projection, Event> GetEventApplier(Type eventType)
+        public Action<IProjection, IEvent> GetEventApplier(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
-            if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
+            if (!typeof(IEvent).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
             {
                 throw new ArgumentException($"{eventType} is not an event type!");
             }
@@ -79,10 +79,10 @@ namespace Cleanic.DomainInfo
         /// <summary>
         /// Get action which extract projection identifier from passed event.
         /// </summary>
-        public Func<Event, String> GetIdFromEventExtractor(Type eventType)
+        public Func<IEvent, String> GetIdFromEventExtractor(Type eventType)
         {
             if (eventType == null) throw new ArgumentNullException(nameof(eventType));
-            if (!typeof(Event).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
+            if (!typeof(IEvent).GetTypeInfo().IsAssignableFrom(eventType.GetTypeInfo()))
             {
                 throw new ArgumentException($"{eventType} is not an event type!");
             }

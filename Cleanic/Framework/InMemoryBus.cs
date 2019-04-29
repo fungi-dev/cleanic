@@ -21,13 +21,13 @@ namespace Cleanic.Framework
         {
             _busy = false;
             _queue = new Queue<Object>();
-            _eventSubscribers = new Dictionary<Type, List<Func<Event, Task>>>();
+            _eventSubscribers = new Dictionary<Type, List<Func<IEvent, Task>>>();
         }
 
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        public async Task Send(Command command)
+        public async Task Send(ICommand command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
             await Handle(command);
@@ -36,7 +36,7 @@ namespace Cleanic.Framework
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        public async Task Publish(Event @event)
+        public async Task Publish(IEvent @event)
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
             await Handle(@event);
@@ -46,7 +46,7 @@ namespace Cleanic.Framework
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        public void HandleCommands(Func<Command, Task> handler)
+        public void HandleCommands(Func<ICommand, Task> handler)
         {
             if (_commandHandler != null) throw new Exception("Handler already registered!");
             _commandHandler = handler;
@@ -56,9 +56,9 @@ namespace Cleanic.Framework
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        public void ListenEvent(Type eventType, Func<Event, Task> listener)
+        public void ListenEvent(Type eventType, Func<IEvent, Task> listener)
         {
-            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<Event, Task>>());
+            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<IEvent, Task>>());
             var current = _eventSubscribers[eventType];
             if (!current.Contains(listener)) current.Add(listener);
         }
@@ -87,20 +87,20 @@ namespace Cleanic.Framework
                 var message = _queue.Dequeue();
                 var type = message.GetType();
 
-                if (message is Command)
+                if (message is ICommand)
                 {
                     if (_commandHandler == null) throw new Exception("Can't find command handler!");
-                    await _commandHandler((Command)message);
+                    await _commandHandler((ICommand)message);
                 }
 
-                if (message is Event)
+                if (message is IEvent)
                 {
                     if (_eventSubscribers.ContainsKey(type))
                     {
-                        var handlers = new List<Func<Event, Task>>(_eventSubscribers[type]);
+                        var handlers = new List<Func<IEvent, Task>>(_eventSubscribers[type]);
                         foreach (var handler in handlers)
                         {
-                            await handler((Event)message);
+                            await handler((IEvent)message);
                         }
                     }
                 }
@@ -109,7 +109,7 @@ namespace Cleanic.Framework
 
         private Boolean _busy;
         private readonly Queue<Object> _queue;
-        private Func<Command, Task> _commandHandler;
-        private readonly Dictionary<Type, List<Func<Event, Task>>> _eventSubscribers;
+        private Func<ICommand, Task> _commandHandler;
+        private readonly Dictionary<Type, List<Func<IEvent, Task>>> _eventSubscribers;
     }
 }

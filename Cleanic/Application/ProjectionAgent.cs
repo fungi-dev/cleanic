@@ -17,7 +17,7 @@ namespace Cleanic.Application
         /// <param name="bus">Bus to catch events.</param>
         /// <param name="db">Place to store built projections.</param>
         /// <param name="domainInfo">Domain projections in which should be tracked.</param>
-        public ProjectionAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo)
+        public ProjectionAgent(IMessageBus bus, IRepository db, DomainInfo.DomainInfo domainInfo)
         {
             if (bus == null) throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -31,17 +31,17 @@ namespace Cleanic.Application
             }
         }
 
-        private async Task RunProjectionUpdating(ProjectionInfo projectionInfo, Event e)
+        private async Task RunProjectionUpdating(ProjectionInfo projectionInfo, IEvent e)
         {
             var eventType = e.GetType();
 
             var idExtractor = projectionInfo.GetIdFromEventExtractor(eventType);
             var id = idExtractor(e);
 
-            var projection = (Projection)await _db.Load(id, projectionInfo.Type);
+            var projection = (IProjection)await _db.Load(id, projectionInfo.Type);
             if (projection == null)
             {
-                projection = (Projection)Activator.CreateInstance(projectionInfo.Type, id);
+                projection = (IProjection)Activator.CreateInstance(projectionInfo.Type, id);
             }
 
             var eventApplier = projectionInfo.GetEventApplier(eventType);
@@ -50,6 +50,6 @@ namespace Cleanic.Application
             await _db.Save(projection);
         }
 
-        private readonly Repository _db;
+        private readonly IRepository _db;
     }
 }

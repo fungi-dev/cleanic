@@ -14,7 +14,7 @@ namespace Cleanic.Application
     /// <remarks>There can be many logic agent instances for one facade.</remarks>
     public class LogicAgent
     {
-        public LogicAgent(IMessageBus bus, Repository db, DomainInfo.DomainInfo domainInfo, Func<Type, IDomainService[]> domainServiceFactory)
+        public LogicAgent(IMessageBus bus, IRepository db, DomainInfo.DomainInfo domainInfo, Func<Type, IDomainService[]> domainServiceFactory)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -31,10 +31,10 @@ namespace Cleanic.Application
             }
         }
 
-        private async Task HandleCommand(Command cmd)
+        private async Task HandleCommand(ICommand cmd)
         {
             var aggType = FindAggregate(cmd.GetType());
-            var agg = (Aggregate)await _db.Load(cmd.AggregateId, aggType);
+            var agg = (IAggregate)await _db.Load(cmd.AggregateId, aggType);
             var handler = FindCommandHandler(agg, cmd);
 
             await handler.Invoke();
@@ -45,12 +45,12 @@ namespace Cleanic.Application
             foreach (var c in agg.FreshCommands) await _bus.Send(c);
         }
 
-        private async Task RunSaga(SagaInfo sagaInfo, Event e)
+        private async Task RunSaga(SagaInfo sagaInfo, IEvent e)
         {
             var aggType = FindAggregate(e.GetType());
             var eventType = e.GetType();
-            var saga = (Saga)Activator.CreateInstance(sagaInfo.Type);
-            var agg = (Aggregate)await _db.Load(e.AggregateId, aggType);
+            var saga = (ISaga)Activator.CreateInstance(sagaInfo.Type);
+            var agg = (IAggregate)await _db.Load(e.AggregateId, aggType);
             var handler = FindEventHandler(saga, e, agg);
             var cmds = await handler.Invoke();
             foreach (var c in cmds) await _bus.Send(c);
@@ -66,7 +66,7 @@ namespace Cleanic.Application
             throw new Exception($"There is no aggregate for \"{commandOrEventType}\" in the domain!");
         }
 
-        protected virtual Func<Task> FindCommandHandler(Aggregate aggregate, Command command)
+        protected virtual Func<Task> FindCommandHandler(IAggregate aggregate, ICommand command)
         {
             var aggType = aggregate.GetType();
             var cmdType = command.GetType();
@@ -86,7 +86,7 @@ namespace Cleanic.Application
             return () => (Task)handler.Invoke(aggregate, handlerParams.ToArray());
         }
 
-        protected virtual Func<Task<Command[]>> FindEventHandler(Saga saga, Event e, Aggregate agg)
+        protected virtual Func<Task<ICommand[]>> FindEventHandler(ISaga saga, IEvent e, IAggregate agg)
         {
             var sagaType = saga.GetType();
             var eType = e.GetType();
@@ -102,11 +102,11 @@ namespace Cleanic.Application
 
             var handlerParams = new List<Object> { e };
             if (handler.GetParameters().Count() > 1) handlerParams.Add(agg);
-            return () => (Task<Command[]>)handler.Invoke(saga, handlerParams.ToArray());
+            return () => (Task<ICommand[]>)handler.Invoke(saga, handlerParams.ToArray());
         }
 
         private readonly IMessageBus _bus;
-        private readonly Repository _db;
+        private readonly IRepository _db;
         private readonly Type[] _aggregates;
         private readonly Func<Type, IDomainService[]> _services;
     }
