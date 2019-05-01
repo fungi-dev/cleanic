@@ -20,7 +20,7 @@ namespace Cleanic.DomainInfo
                                  let p = m.GetParameters()
                                  where p.Length >= 1
                                  let t = p[0].ParameterType
-                                 where typeof(IEvent).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
+                                 where typeof(Event).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())
                                  select t).ToArray();
         }
 

@@ -38,7 +38,7 @@ namespace Cleanic.DomainInfo
         {
             var aggregate = Aggregates.Single(x => String.Equals(x.Type.Name, aggregateName, StringComparison.OrdinalIgnoreCase));
             var commands = aggregate.Type.GetTypeInfo().DeclaredNestedTypes
-                                    .Where(x => typeof(ICommand).GetTypeInfo().IsAssignableFrom(x));
+                                    .Where(x => typeof(Command).GetTypeInfo().IsAssignableFrom(x));
             return commands.Single(x => String.Equals(x.Name, commandName, StringComparison.OrdinalIgnoreCase));
         }
     }

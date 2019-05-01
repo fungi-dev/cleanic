@@ -26,12 +26,12 @@ namespace Cleanic.Application
             {
                 foreach (var eventType in p.InfluencingEventTypes)
                 {
-                    bus.ListenEvent(eventType, @event => RunProjectionUpdating(p, @event));
+                    bus.ListenEvents(eventType, @event => RunProjectionUpdating(p, @event));
                 }
             }
         }
 
-        private async Task RunProjectionUpdating(ProjectionInfo projectionInfo, IEvent e)
+        private async Task RunProjectionUpdating(ProjectionInfo projectionInfo, Event e)
         {
             var eventType = e.GetType();
 

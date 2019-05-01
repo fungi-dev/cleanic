@@ -14,53 +14,48 @@ namespace Cleanic.Framework
     /// </remarks>
     public class InMemoryBus : IMessageBus
     {
-        /// <summary>
-        /// Create new instance of message bus.
-        /// </summary>
         public InMemoryBus()
         {
             _busy = false;
             _queue = new Queue<Object>();
-            _eventSubscribers = new Dictionary<Type, List<Func<IEvent, Task>>>();
+            _eventSubscribers = new Dictionary<Type, List<Func<Event, Task>>>();
         }
 
-        /// <summary>
-        /// Send the command with hope that some handler will catch it.
-        /// </summary>
-        public async Task Send(ICommand command)
+        public async Task Send(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
             await Handle(command);
         }
 
-        /// <summary>
-        /// Publish the event that will be caught by all interested subscribers.
-        /// </summary>
-        public async Task Publish(IEvent @event)
+        public async Task Publish(Event @event)
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
             await Handle(@event);
         }
 
-        /// <summary>
-        /// Register the action which will handle all instances of some type of commands.
-        /// The only one action can be for each type of command.
-        /// </summary>
-        public void HandleCommands(Func<ICommand, Task> handler)
+        public async Task Publish(Command.Result commandResult)
+        {
+            if (commandResult == null) throw new ArgumentNullException(nameof(commandResult));
+            await Handle(commandResult);
+        }
+
+        public void HandleCommands(Func<Command, Task> handler)
         {
             if (_commandHandler != null) throw new Exception("Handler already registered!");
             _commandHandler = handler;
         }
 
-        /// <summary>
-        /// Register the action which will handle all instances of some type of event.
-        /// All registered actions will be called when such event will take place.
-        /// </summary>
-        public void ListenEvent(Type eventType, Func<IEvent, Task> listener)
+        public void ListenEvents(Type eventType, Func<Event, Task> listener)
         {
-            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<IEvent, Task>>());
+            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<Event, Task>>());
             var current = _eventSubscribers[eventType];
             if (!current.Contains(listener)) current.Add(listener);
+        }
+
+        public void ListenCommandResults(Func<Command.Result, Task> listener)
+        {
+            if (_commandResultListener != null) throw new Exception("Listener already registered!");
+            _commandResultListener = listener;
         }
 
         private async Task Handle(Object message)
@@ -87,29 +82,36 @@ namespace Cleanic.Framework
                 var message = _queue.Dequeue();
                 var type = message.GetType();
 
-                if (message is ICommand)
+                if (message is Command)
                 {
                     if (_commandHandler == null) throw new Exception("Can't find command handler!");
-                    await _commandHandler((ICommand)message);
+                    await _commandHandler((Command)message);
                 }
 
-                if (message is IEvent)
+                if (message is Event)
                 {
                     if (_eventSubscribers.ContainsKey(type))
                     {
-                        var handlers = new List<Func<IEvent, Task>>(_eventSubscribers[type]);
+                        var handlers = new List<Func<Event, Task>>(_eventSubscribers[type]);
                         foreach (var handler in handlers)
                         {
-                            await handler((IEvent)message);
+                            await handler((Event)message);
                         }
                     }
+                }
+
+                if (message is Command.Result)
+                {
+                    if (_commandResultListener == null) throw new Exception("Can't find command result listener!");
+                    await _commandResultListener((Command.Result)message);
                 }
             }
         }
 
         private Boolean _busy;
         private readonly Queue<Object> _queue;
-        private Func<ICommand, Task> _commandHandler;
-        private readonly Dictionary<Type, List<Func<IEvent, Task>>> _eventSubscribers;
+        private Func<Command, Task> _commandHandler;
+        private readonly Dictionary<Type, List<Func<Event, Task>>> _eventSubscribers;
+        private Func<Command.Result, Task> _commandResultListener;
     }
 }
