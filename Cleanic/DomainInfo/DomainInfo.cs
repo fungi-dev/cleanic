@@ -5,9 +5,9 @@ using System.Reflection;
 
 namespace Cleanic.DomainInfo
 {
-    public class DomainInfo
+    public abstract class DomainInfo
     {
-        public DomainInfo(Type[] aggregateTypes, Type[] sagaTypes, Type[] projectionTypes)
+        protected DomainInfo(Type[] aggregateTypes, Type[] sagaTypes, Type[] projectionTypes)
         {
             if (aggregateTypes.Any(_ => !typeof(IAggregate).GetTypeInfo().IsAssignableFrom(_.GetTypeInfo())))
             {
