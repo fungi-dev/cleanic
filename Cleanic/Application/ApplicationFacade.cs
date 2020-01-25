@@ -11,9 +11,8 @@ namespace Cleanic.Application
         /// <summary>
         /// Query the application for some data.
         /// </summary>
-        Task<TQueryResult> Get<TQuery, TQueryResult>(TQuery query)
-            where TQuery : IQuery
-            where TQueryResult : IQueryResult<TQuery>;
+        Task<TQueryResult> Get<TQueryResult>(IQuery<TQueryResult> query)
+            where TQueryResult : class, IQueryResult;
     }
 
     public abstract class ApplicationFacade : IApplicationFacade
@@ -36,15 +35,14 @@ namespace Cleanic.Application
             await _bus.Send(command);
         }
 
-        public async Task<TQueryResult> Get<TQuery, TQueryResult>(TQuery query)
-            where TQuery : IQuery
-            where TQueryResult : IQueryResult<TQuery>
+        public async Task<TQueryResult> Get<TQueryResult>(IQuery<TQueryResult> query)
+            where TQueryResult : class, IQueryResult
         {
             //todo serve multitanancy
             //todo do authentication
             //todo do authorization
 
-            return await _db.Load<TQuery, TQueryResult>(query.EntityId);
+            return await _db.Load<TQueryResult>(query.EntityId);
         }
 
         private readonly ICommandBus _bus;

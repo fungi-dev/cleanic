@@ -10,11 +10,4 @@
     {
         new IIdentity<T> Id { get; }
     }
-
-    public interface IIdentity
-    { }
-
-    public interface IIdentity<T> : IIdentity
-        where T : IEntity<T>
-    { }
 }
