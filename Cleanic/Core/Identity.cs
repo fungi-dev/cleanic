@@ -8,6 +8,6 @@ namespace Cleanic.Core
     }
 
     public interface IIdentity<T> : IIdentity
-        where T : IEntity<T>
+        where T : IEntity
     { }
 }

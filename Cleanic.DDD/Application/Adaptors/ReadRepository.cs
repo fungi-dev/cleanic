@@ -1,4 +1,5 @@
 ﻿using Cleanic.Core;
+using System;
 using System.Threading.Tasks;
 
 namespace Cleanic.Application
@@ -10,12 +11,15 @@ namespace Cleanic.Application
             _store = store;
         }
 
-        public async Task<TQueryResult> Load<TQueryResult>(IIdentity entityId)
-            where TQueryResult : class, IQueryResult
+        public async Task<IProjection> Load(Type type, IIdentity id)
         {
-            var type = typeof(TQueryResult);
-            var entity = await _store.Load(entityId, type);
-            return entity as TQueryResult;
+            var entity = await _store.Load(id, type);
+            return entity as IProjection;
+        }
+
+        public async Task Save(IProjection projection)
+        {
+            await _store.Save(projection);
         }
 
         private readonly IStateStore _store;

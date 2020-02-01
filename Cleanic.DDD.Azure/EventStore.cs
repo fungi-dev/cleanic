@@ -103,9 +103,9 @@ namespace Cleanic.Framework
             var entities = new List<DynamicTableEntity>();
             do
             {
-                var queryResult = await _table.ExecuteQuerySegmentedAsync(new TableQuery<DynamicTableEntity>(), token);
-                entities.AddRange(queryResult.Results);
-                token = queryResult.ContinuationToken;
+                var projection = await _table.ExecuteQuerySegmentedAsync(new TableQuery<DynamicTableEntity>(), token);
+                entities.AddRange(projection.Results);
+                token = projection.ContinuationToken;
             } while (token != null);
 
             foreach (var entity in entities)

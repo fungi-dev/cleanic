@@ -8,27 +8,27 @@ namespace Cleanic.Framework
 {
     public class InMemoryStateStore : IStateStore
     {
-        public Task<IEntity> Load(IIdentity entityId, Type entityType)
+        public Task<IProjection> Load(IIdentity id, Type type)
         {
-            if (!_db.ContainsKey(entityType)) return Task.FromResult<IEntity>(null);
+            if (!_db.ContainsKey(type)) return Task.FromResult<IProjection>(null);
 
-            return Task.FromResult(_db[entityType].ContainsKey(entityId) ? _db[entityType][entityId] : null);
+            return Task.FromResult(_db[type].ContainsKey(id) ? _db[type][id] : null);
         }
 
-        public Task Save(IEntity entity)
+        public Task Save(IProjection projection)
         {
-            if (!_db.TryGetValue(entity.GetType(), out var entities))
+            if (!_db.TryGetValue(projection.GetType(), out var entities))
             {
-                _db.Add(entity.GetType(), entities = new Dictionary<IIdentity, IEntity>());
+                _db.Add(projection.GetType(), entities = new Dictionary<IIdentity, IProjection>());
             }
 
-            if (!entities.ContainsKey(entity.Id))
+            if (!entities.ContainsKey(projection.Id))
             {
-                entities.Add(entity.Id, entity);
+                entities.Add(projection.Id, projection);
             }
             else
             {
-                entities[entity.Id] = entity;
+                entities[projection.Id] = projection;
             }
 
             return Task.CompletedTask;
@@ -40,6 +40,6 @@ namespace Cleanic.Framework
             return Task.CompletedTask;
         }
 
-        private readonly Dictionary<Type, Dictionary<IIdentity, IEntity>> _db = new Dictionary<Type, Dictionary<IIdentity, IEntity>>();
+        private readonly Dictionary<Type, Dictionary<IIdentity, IProjection>> _db = new Dictionary<Type, Dictionary<IIdentity, IProjection>>();
     }
 }

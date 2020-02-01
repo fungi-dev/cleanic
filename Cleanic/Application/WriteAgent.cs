@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 namespace Cleanic.Application
 {
+    //todo do logging
     /// <summary>
     /// Agent behind the bus who handles user commands.
     /// </summary>
@@ -18,15 +19,16 @@ namespace Cleanic.Application
             _domain = domain;
 
             _cmdBus.HandleCommands(HandleCommand);
-            foreach (var eventType in domain.AffectingEvents)
+            foreach (var eventMeta in domain.ReactingEvents)
             {
-                _evtBus.ListenEvents(eventType, e => ReactToEvent(e));
+                _evtBus.ListenEvents(eventMeta.Type, e => ReactToEvent(e));
             }
         }
 
         private async Task HandleCommand(ICommand cmd)
         {
-            var entity = await _db.Load(cmd.EntityId, cmd.EntityType);
+            var cmdMeta = _domain.GetCommandMeta(cmd);
+            var entity = await _db.LoadOrCreate(cmd.EntityId, cmdMeta.Entity.Type);
             _domain.ModifyEntity(entity, cmd);
             var events = await _db.Save(entity);
             if (_db != _evtBus)
@@ -37,11 +39,8 @@ namespace Cleanic.Application
 
         private async Task ReactToEvent(IEvent @event)
         {
-            var cmds = _domain.ReactToEvent(@event);
-            foreach (var cmd in cmds)
-            {
-                await _cmdBus.Send(cmd);
-            }
+            var cmds = await _domain.ReactToEvent(@event);
+            foreach (var cmd in cmds) await _cmdBus.Send(cmd);
         }
 
         private readonly ICommandBus _cmdBus;

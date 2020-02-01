@@ -1,13 +1,20 @@
 ﻿namespace Cleanic.Core
 {
-    public interface IQueryResult
+    public interface IProjection
     {
-        IIdentity EntityId { get; }
+        IIdentity Id { get; set; }
     }
 
-    public interface IQuery<T>
-        where T : IQueryResult
+    public interface IProjection<T> : IProjection
+        where T : IEntity
     {
-        IIdentity EntityId { get; }
+        new IIdentity<T> Id { get; set; }
+    }
+
+    public interface IQuery<TEntity, TProjection>
+        where TEntity : IEntity
+        where TProjection : IProjection<TEntity>
+    {
+        IIdentity<TEntity> Id { get; set; }
     }
 }

@@ -14,72 +14,62 @@ namespace Cleanic.Core
         void LoadFromHistory(ICollection<IEvent> history);
     }
 
-    /// <summary>
-    /// The root of domain objects tree.
-    /// Such tree representing complex object, unit of change in the domain.
-    /// Every change in aggregate embodied by appropriate event.
-    /// </summary>
-    public abstract class Aggregate<T> : Entity<T>, IAggregate
-        where T : Aggregate<T>
+    public abstract class Aggregate<T> : IAggregate
+        where T : Entity<T>
     {
-        protected Aggregate(IIdentity<T> id) : base(id) { }
-
-        /// <summary>
-        /// The number of occured events.
-        /// </summary>
-        public UInt32 Version { get; private set; }
-
-        /// <summary>
-        /// Events which haven't been persisted yet.
-        /// </summary>
-        public IReadOnlyCollection<IEvent> ProducedEvents => _changes.ToImmutableHashSet();
-
-        /// <summary>
-        /// Lead the aggregate to state when all events have been applied.
-        /// </summary>
-        /// <param name="history">Events to be applied.</param>
-        public void LoadFromHistory(ICollection<IEvent> history)
+        public Aggregate(IIdentity id)
         {
-            if (history.Any(_ => _.EntityId != Id))
-            {
-                throw new Exception("Attempt to apply foreign events to aggregate!");
-            }
-
-            foreach (var @event in history) Apply(@event as IEvent<T>, false);
+            State = (T)Activator.CreateInstance(typeof(T), id);
         }
 
-        /// <summary>
-        /// Upgrade this aggregate according to new event.
-        /// Prepare event to be persisted by infrastructure.
-        /// And update aggregate's state if needed.
-        /// </summary>
-        /// <remarks>All events produced by aggregate should be passed into this method.</remarks>
-        protected void Apply(IEvent<T> eventData)
+        public IIdentity Id => State?.Id;
+        public T State { get; }
+        public UInt32 Version { get; private set; }
+
+        public IReadOnlyCollection<IEvent> ProducedEvents => _changes.ToImmutableHashSet();
+
+        public void LoadFromHistory(ICollection<IEvent> history)
         {
-            var @event = eventData.HappenedWith(Id, DateTime.UtcNow);
+            foreach (var e in history)
+            {
+                var stateOfEventType = e.GetType().GetTypeInfo().BaseType.GenericTypeArguments.Single();
+                if (stateOfEventType != typeof(T)) throw new Exception("Attempt to apply foreign events to aggregate!");
+            }
+
+            foreach (var @event in history) Apply(@event, false);
+        }
+
+        protected Boolean TryValidate(ICommand command)
+        {
+            var methods = GetType().GetRuntimeMethods()
+                .Where(x => x.GetParameters().Length == 1)
+                .Where(x => x.ReturnType.IsErrorCollection());
+            var checker = methods.SingleOrDefault(x => x.GetParameters()[0].ParameterType == command.GetType());
+
+            var errors = new List<IError>();
+            if (checker != null) errors.AddRange((IEnumerable<IError>)checker.Invoke(this, new[] { command }));
+            foreach (var error in errors) Apply(error, true);
+
+            return !errors.Any();
+        }
+
+        protected void Apply(IEvent<T> @event)
+        {
             Apply(@event, true);
         }
 
-        /// <summary>
-        /// Get method which applies event to aggregate's state.
-        /// </summary>
-        protected virtual MethodInfo GetApplierOfConcreteEvent(Type eventType)
+        private MethodInfo GetApplierOfConcreteEvent(Type eventType)
         {
-            foreach (var method in GetType().GetRuntimeMethods().Where(x => x.Name == "On"))
-            {
-                var parameters = method.GetParameters();
-                if (parameters.Length != 1) continue;
-                if (parameters[0].ParameterType == eventType) return method;
-            }
-            return null;
+            var methods = typeof(T).GetRuntimeMethods().Where(x => x.GetParameters().Length == 1);
+            return methods.Single(x => x.GetParameters()[0].ParameterType == eventType);
         }
 
-        private readonly List<IEvent<T>> _changes = new List<IEvent<T>>();
+        private readonly List<IEvent> _changes = new List<IEvent>();
 
-        private void Apply(IEvent<T> @event, Boolean isFresh)
+        private void Apply(IEvent @event, Boolean isFresh)
         {
             var applier = GetApplierOfConcreteEvent(@event.GetType());
-            applier?.Invoke(this, new Object[] { @event });
+            applier?.Invoke(State, new Object[] { @event });
             Version++;
 
             if (isFresh) _changes.Add(@event);

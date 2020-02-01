@@ -12,12 +12,7 @@ namespace Cleanic.Application
             _store = store;
         }
 
-        public async Task<T> Load<T>(IIdentity id) where T : IEntity
-        {
-            return (T)await Load(id, typeof(T));
-        }
-
-        public async Task<IEntity> Load(IIdentity id, Type type)
+        public async Task<IEntity> LoadOrCreate(IIdentity id, Type type)
         {
             var agg = (IAggregate)Activator.CreateInstance(type, id);
             var persistedEvents = await _store.Load(id);
@@ -28,9 +23,11 @@ namespace Cleanic.Application
         public async Task<IEvent[]> Save(IEntity entity)
         {
             var agg = (IAggregate)entity;
-            if (!agg.ProducedEvents.Any()) throw new Exception("There is nothing to save!");
-            var persistedVersion = Convert.ToUInt32(agg.Version - agg.ProducedEvents.Count);
-            await _store.Save(agg.Id, persistedVersion, agg.ProducedEvents);
+            if (agg.ProducedEvents.Any())
+            {
+                var persistedVersion = Convert.ToUInt32(agg.Version - agg.ProducedEvents.Count);
+                await _store.Save(agg.Id, persistedVersion, agg.ProducedEvents);
+            }
             return agg.ProducedEvents.ToArray();
         }
 

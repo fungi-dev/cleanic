@@ -3,7 +3,7 @@
 namespace Cleanic.Core
 {
     public abstract class Identity<T> : ValueObject, IIdentity<T>
-        where T : Entity<T>
+        where T : IEntity<T>
     {
         protected Identity(String value)
         {
@@ -11,5 +11,7 @@ namespace Cleanic.Core
         }
 
         public String Value { get; }
+
+        public override String ToString() => Value;
     }
 }

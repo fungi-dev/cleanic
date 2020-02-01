@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cleanic.Framework
 {
+    //todo do logging
     /// <summary>
     /// Synchronous message bus working in memory.
     /// </summary>

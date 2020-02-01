@@ -6,7 +6,7 @@ namespace Cleanic.Application
 {
     public interface IWriteRepository
     {
-        Task<IEntity> Load(IIdentity id, Type type);
+        Task<IEntity> LoadOrCreate(IIdentity id, Type type);
 
         Task<IEvent[]> Save(IEntity entity);
     }

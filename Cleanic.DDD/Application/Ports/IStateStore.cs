@@ -6,8 +6,8 @@ namespace Cleanic.Application
 {
     public interface IStateStore
     {
-        Task<IEntity> Load(IIdentity entityId, Type entityType);
-        Task Save(IEntity entity);
+        Task<IProjection> Load(IIdentity id, Type type);
+        Task Save(IProjection projection);
         Task Clear();
     }
 }

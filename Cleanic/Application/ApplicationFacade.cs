@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 namespace Cleanic.Application
 {
+    //todo do logging
     public interface IApplicationFacade
     {
         Task Do(ICommand command);
@@ -11,13 +12,14 @@ namespace Cleanic.Application
         /// <summary>
         /// Query the application for some data.
         /// </summary>
-        Task<TQueryResult> Get<TQueryResult>(IQuery<TQueryResult> query)
-            where TQueryResult : class, IQueryResult;
+        Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
+            where TEntity : IEntity
+            where TProjection : IProjection<TEntity>;
     }
 
-    public abstract class ApplicationFacade : IApplicationFacade
+    public class ApplicationFacade : IApplicationFacade
     {
-        protected ApplicationFacade(ICommandBus bus, IReadRepository db)
+        public ApplicationFacade(ICommandBus bus, IReadRepository db)
         {
             _bus = bus;
             _db = db;
@@ -35,14 +37,15 @@ namespace Cleanic.Application
             await _bus.Send(command);
         }
 
-        public async Task<TQueryResult> Get<TQueryResult>(IQuery<TQueryResult> query)
-            where TQueryResult : class, IQueryResult
+        public async Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
+            where TEntity : IEntity
+            where TProjection : IProjection<TEntity>
         {
             //todo serve multitanancy
             //todo do authentication
             //todo do authorization
 
-            return await _db.Load<TQueryResult>(query.EntityId);
+            return (TProjection)await _db.Load(typeof(TProjection), query.Id);
         }
 
         private readonly ICommandBus _bus;
