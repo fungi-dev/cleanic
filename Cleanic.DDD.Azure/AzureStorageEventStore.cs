@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace Cleanic.Framework
 {
-    public class EventStore : IEventStore
+    public class AzureStorageEventStore : IEventStore
     {
-        public EventStore(String connectionString)
+        public AzureStorageEventStore(String connectionString)
         {
             _serializerSettings = new JsonSerializerSettings
             {
@@ -27,7 +27,7 @@ namespace Cleanic.Framework
             _table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
-        public async Task<IEvent[]> Load(IIdentity aggregateId)
+        public async Task<IEvent[]> LoadEvents(AggregateMeta _, IIdentity aggregateId)
         {
             if (aggregateId == null) throw new ArgumentNullException(nameof(aggregateId));
 
@@ -42,22 +42,27 @@ namespace Cleanic.Framework
             return events.ToArray();
         }
 
-        public async Task Save(IIdentity aggregateId, UInt32 lastVersion, IEnumerable<IEvent> newEvents)
+        public Task<IEvent[]> LoadEvents(IReadOnlyCollection<EventMeta> eventMetas)
         {
-            var events = newEvents.ToArray();
+            throw new NotImplementedException();
+        }
+
+        public async Task SaveEvents(AggregateMeta _, IIdentity aggregateId, IEnumerable<IEvent> events, UInt32 expectedVersion)
+        {
+            events = events.ToArray();
             if (aggregateId == null) throw new ArgumentNullException(nameof(aggregateId));
-            if (events == null || events.Length == 0) throw new ArgumentNullException(nameof(events));
+            if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
             var descriptors = await ReadDescriptors(aggregateId.Value);
             if (descriptors.Any())
             {
-                if (lastVersion != descriptors.Last().Key) throw new Exception();
+                if (expectedVersion != descriptors.Last().Key) throw new Exception();
             }
 
             var batch = new TableBatchOperation();
             foreach (var @event in events)
             {
-                lastVersion++;
+                expectedVersion++;
                 var eventData = JsonConvert.SerializeObject(@event, _serializerSettings);
                 var chunkLength = 31 * 1024;
                 if (eventData.Length <= chunkLength)
@@ -65,7 +70,7 @@ namespace Cleanic.Framework
                     batch.Insert(new EventsTableEntity
                     {
                         PartitionKey = aggregateId.Value,
-                        RowKey = lastVersion.ToString(),
+                        RowKey = expectedVersion.ToString(),
                         Event = eventData
                     });
                 }
@@ -80,7 +85,7 @@ namespace Cleanic.Framework
                         batch.Insert(new EventsTableEntity
                         {
                             PartitionKey = aggregateId.Value,
-                            RowKey = $"{lastVersion}{_longEventChunksDelimiter}{i}",
+                            RowKey = $"{expectedVersion}{_longEventChunksDelimiter}{i}",
                             Event = chunk
                         });
                     }

@@ -7,15 +7,17 @@ namespace Cleanic.Application
 {
     public class WriteRepository : IWriteRepository
     {
-        public WriteRepository(IEventStore store)
+        public WriteRepository(IEventStore events, IDomainFacade domain)
         {
-            _store = store;
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _domain = domain ?? throw new ArgumentNullException(nameof(domain));
         }
 
         public async Task<IEntity> LoadOrCreate(IIdentity id, Type type)
         {
             var agg = (IAggregate)Activator.CreateInstance(type, id);
-            var persistedEvents = await _store.Load(id);
+            var aggMeta = ((DomainFacade)_domain).GetAggregateMeta(agg);
+            var persistedEvents = await _events.LoadEvents(aggMeta, id);
             agg.LoadFromHistory(persistedEvents);
             return agg as IEntity;
         }
@@ -23,14 +25,16 @@ namespace Cleanic.Application
         public async Task<IEvent[]> Save(IEntity entity)
         {
             var agg = (IAggregate)entity;
+            var aggMeta = ((DomainFacade)_domain).GetAggregateMeta(agg);
             if (agg.ProducedEvents.Any())
             {
                 var persistedVersion = Convert.ToUInt32(agg.Version - agg.ProducedEvents.Count);
-                await _store.Save(agg.Id, persistedVersion, agg.ProducedEvents);
+                await _events.SaveEvents(aggMeta, agg.Id, agg.ProducedEvents, persistedVersion);
             }
             return agg.ProducedEvents.ToArray();
         }
 
-        private readonly IEventStore _store;
+        private readonly IEventStore _events;
+        private readonly IDomainFacade _domain;
     }
 }

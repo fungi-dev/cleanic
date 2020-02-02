@@ -13,6 +13,7 @@ namespace Cleanic.Core
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
 
             _applyMethods = Type.GetRuntimeMethods()
+                .Where(x => !x.IsStatic)
                 .Where(x => x.GetParameters().Length == 1)
                 .Where(x => x.GetParameters()[0].ParameterType.IsEvent())
                 .ToArray();

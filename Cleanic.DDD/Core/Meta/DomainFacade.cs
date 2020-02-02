@@ -66,6 +66,16 @@ namespace Cleanic.Core
             return _aggregates.SelectMany(x => x.Events).Single(x => x.Type == @event.GetType());
         }
 
+        public IProjectionMeta GetProjectionMeta(IProjection projection)
+        {
+            return _aggregates.SelectMany(x => x.Projections).Single(x => x.Type == projection.GetType());
+        }
+
+        public AggregateMeta GetAggregateMeta(IAggregate aggregate)
+        {
+            return _aggregates.Single(x => x.Type == aggregate.GetType());
+        }
+
         private readonly AggregateMeta[] _aggregates;
         private readonly SagaMeta[] _sagas;
     }

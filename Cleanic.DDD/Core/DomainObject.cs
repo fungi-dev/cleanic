@@ -19,9 +19,21 @@ namespace Cleanic.Core
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
-            var components = GetIdentityComponents();
-            var otherComponents = other.GetIdentityComponents();
-            return components.SequenceEqual(otherComponents);
+            var components = GetIdentityComponents().ToArray();
+            var otherComponents = other.GetIdentityComponents().ToArray();
+            if (components.Length != otherComponents.Length) return false;
+            for (var i = 0; i < components.Length; i++)
+            {
+                if (components[i] is String str1 && otherComponents[i] is String str2)
+                {
+                    if (!String.Equals(str1, str2, StringComparison.Ordinal)) return false;
+                }
+                else
+                {
+                    if (!Equals(components[i], otherComponents[i])) return false;
+                }
+            }
+            return true;
         }
 
         public override Boolean Equals(Object other)
@@ -43,16 +55,6 @@ namespace Cleanic.Core
                 }
                 return hash;
             }
-        }
-
-        public static Boolean operator ==(DomainObject left, DomainObject right)
-        {
-            return Equals(left, right);
-        }
-
-        public static Boolean operator !=(DomainObject left, DomainObject right)
-        {
-            return !Equals(left, right);
         }
     }
 }

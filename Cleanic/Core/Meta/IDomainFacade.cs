@@ -20,5 +20,7 @@ namespace Cleanic.Core
         CommandMeta GetCommandMeta(ICommand command);
 
         EventMeta GetEventMeta(IEvent @event);
+
+        IProjectionMeta GetProjectionMeta(IProjection projection);
     }
 }

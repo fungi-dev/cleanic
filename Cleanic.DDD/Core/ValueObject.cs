@@ -12,18 +12,8 @@ namespace Cleanic.Core
     {
         protected override IEnumerable<Object> GetIdentityComponents()
         {
-            var properties = GetType().GetTypeInfo().DeclaredProperties.Where(p => p.CanRead && p.CanWrite);
-            var values = new List<Object>();
-            foreach (var property in properties)
-            {
-                var value = property.GetValue(this);
-                if (property.PropertyType == typeof(String))
-                {
-                    value = ((String)value)?.ToLowerInvariant();
-                }
-                values.Add(value);
-            }
-            return values;
+            var properties = GetType().GetRuntimeProperties().Where(x => x.GetMethod?.IsStatic == false);
+            return properties.Select(x => x.GetValue(this));
         }
     }
 }

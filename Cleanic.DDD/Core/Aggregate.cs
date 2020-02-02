@@ -26,7 +26,7 @@ namespace Cleanic.Core
         public T State { get; }
         public UInt32 Version { get; private set; }
 
-        public IReadOnlyCollection<IEvent> ProducedEvents => _changes.ToImmutableHashSet();
+        public IReadOnlyCollection<IEvent> ProducedEvents => _changes.ToImmutableList();
 
         public void LoadFromHistory(ICollection<IEvent> history)
         {

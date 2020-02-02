@@ -1,42 +1,53 @@
 ﻿using Cleanic.Application;
 using Cleanic.Core;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cleanic.Framework
 {
-    /// <summary>
-    /// Event store working in memory.
-    /// </summary>
-    /// <remarks>
-    /// This is an embedded <see cref="IEventStore">port</see> adapter implementation for tests and experiments.
-    /// </remarks>
-    public sealed class InMemoryEventStore : IEventStore
+    public class InMemoryEventStore : IEventStore
     {
-        /// <inheritdoc />
-        public Task<IEvent[]> Load(IIdentity aggregateId)
+        public Task<IEvent[]> LoadEvents(AggregateMeta aggregateMeta, IIdentity aggregateId)
         {
-            return Task.FromResult(_db.ContainsKey(aggregateId) ? _db[aggregateId].ToArray() : Array.Empty<IEvent>());
+            if (_dictionary.TryGetValue(Tuple.Create(aggregateMeta.Type, aggregateId), out var list))
+                return Task.FromResult(list.ToArray());
+            return Task.FromResult(Array.Empty<IEvent>());
         }
 
-        /// <inheritdoc />
-        public Task Save(IIdentity aggregateId, UInt32 lastVersion, IEnumerable<IEvent> newEvents)
+        public Task<IEvent[]> LoadEvents(IReadOnlyCollection<EventMeta> eventMetas)
         {
-            if (!_db.ContainsKey(aggregateId)) _db.Add(aggregateId, new List<IEvent>());
-            var savedVersion = Convert.ToUInt32(_db[aggregateId].Count);
-            if (savedVersion != lastVersion) throw new Exception("Concurrency conflict: cannot persist these events!");
-            _db[aggregateId].AddRange(newEvents);
+            var result = new List<IEvent>();
+            foreach (var eventMeta in eventMetas)
+            {
+                if (_eventsByType.TryGetValue(eventMeta.Type, out var list))
+                    result.AddRange(list);
+            }
+
+            return Task.FromResult(result.OrderBy(x => x.Moment).ToArray());
+        }
+
+        public Task SaveEvents(AggregateMeta aggregateMeta, IIdentity aggregateId, IEnumerable<IEvent> events, UInt32 expectedVersion)
+        {
+            var key = Tuple.Create(aggregateMeta.Type, aggregateId);
+            var list = _dictionary.GetOrAdd(key, tuple => new List<IEvent>(0));
+
+            if (list.Count != expectedVersion) throw new Exception("Concurrent access to event store!");
+
+            list.AddRange(events);
+            foreach (var @event in events)
+            {
+                var eventType = @event.GetType();
+                var listOfType = _eventsByType.GetOrAdd(eventType, new List<IEvent>());
+                listOfType.Add(@event);
+            }
 
             return Task.CompletedTask;
         }
 
-        public Task Clear()
-        {
-            _db.Clear();
-            return Task.CompletedTask;
-        }
-
-        private readonly Dictionary<IIdentity, List<IEvent>> _db = new Dictionary<IIdentity, List<IEvent>>();
+        private readonly ConcurrentDictionary<Tuple<Type, IIdentity>, List<IEvent>> _dictionary = new ConcurrentDictionary<Tuple<Type, IIdentity>, List<IEvent>>();
+        private readonly ConcurrentDictionary<Type, List<IEvent>> _eventsByType = new ConcurrentDictionary<Type, List<IEvent>>();
     }
 }

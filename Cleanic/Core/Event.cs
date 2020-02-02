@@ -1,8 +1,11 @@
-﻿namespace Cleanic.Core
+﻿using System;
+
+namespace Cleanic.Core
 {
     public interface IEvent
     {
         IIdentity EntityId { get; }
+        DateTime Moment { get; }
     }
 
     public interface IEvent<T> : IEvent
