@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace Cleanic.Core
 {
@@ -11,8 +12,12 @@ namespace Cleanic.Core
             Moment = DateTime.UtcNow;
         }
 
-        public IIdentity<T> EntityId { get; }
-        public DateTime Moment { get; }
+        [JsonProperty]
+        public IIdentity<T> EntityId { get; private set; }
+
+        [JsonProperty]
+        public DateTime Moment { get; private set; }
+
         IIdentity IEvent.EntityId => EntityId;
     }
 

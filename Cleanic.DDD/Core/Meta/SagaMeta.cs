@@ -1,5 +1,4 @@
-﻿using Cleanic.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -10,14 +9,14 @@ namespace Cleanic.Core
 {
     public class SagaMeta
     {
-        public SagaMeta(Type sagaType)
+        public SagaMeta(Type sagaType, IDomainFacade domain)
         {
             Type = sagaType ?? throw new ArgumentNullException(nameof(sagaType));
 
             var methodsWithEventParam = Type.GetRuntimeMethods().Where(x => x.GetParameters().Length == 1 && x.GetParameters()[0].ParameterType.IsEvent());
             _reactMethods = methodsWithEventParam.Where(x => x.ReturnType.IsCommandCollection()).ToArray();
             var events = _reactMethods.Select(x => x.GetParameters()[0].ParameterType);
-            Events = events.Select(x => new EventMeta(x)).ToImmutableHashSet();
+            Events = events.Select(x => domain.GetEventMeta(x)).ToImmutableHashSet();
         }
 
         public Type Type { get; }

@@ -7,10 +7,8 @@ namespace Cleanic.Application
 {
     public interface IEventStore
     {
-        Task<IEvent[]> LoadEvents(AggregateMeta aggregateMeta, IIdentity aggregateId);
-
-        Task<IEvent[]> LoadEvents(IReadOnlyCollection<EventMeta> eventMetas);
-
-        Task SaveEvents(AggregateMeta aggregateMeta, IIdentity aggregateId, IEnumerable<IEvent> events, UInt32 expectedVersion);
+        Task<IEvent[]> LoadEvents(String aggregateName, String aggregateId);
+        Task<IEvent[]> LoadEvents(IEnumerable<EventMeta> eventMetas);
+        Task SaveEvents(String aggregateName, String aggregateId, IEnumerable<IEvent> events, UInt32 expectedVersion);
     }
 }

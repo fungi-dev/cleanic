@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Cleanic.Core
@@ -7,7 +8,7 @@ namespace Cleanic.Core
     {
         IReadOnlyCollection<EventMeta> ApplyingEvents { get; }
 
-        IReadOnlyCollection<IProjectionMeta> ApplyingEvent(EventMeta eventMeta);
+        IReadOnlyCollection<IProjectionMeta> ApplyingEvent(Type eventType);
 
         void ApplyEvent(IProjection projection, IEvent @event);
 
@@ -20,6 +21,8 @@ namespace Cleanic.Core
         CommandMeta GetCommandMeta(ICommand command);
 
         EventMeta GetEventMeta(IEvent @event);
+
+        EventMeta GetEventMeta(Type eventType);
 
         IProjectionMeta GetProjectionMeta(IProjection projection);
     }

@@ -7,7 +7,7 @@ namespace Cleanic.Application
 {
     public class ReadRepository : IReadRepository
     {
-        public ReadRepository(IStateStore states, IEventStore events, IDomainFacade domain, Configuration cfg)
+        public ReadRepository(IProjectionStore states, IEventStore events, IDomainFacade domain, Configuration cfg)
         {
             _states = states ?? throw new ArgumentNullException(nameof(states));
             _events = events ?? throw new ArgumentNullException(nameof(events));
@@ -46,7 +46,7 @@ namespace Cleanic.Application
             }
         }
 
-        private readonly IStateStore _states;
+        private readonly IProjectionStore _states;
         private readonly IEventStore _events;
         private readonly IDomainFacade _domain;
         private readonly Configuration _cfg;

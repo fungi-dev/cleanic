@@ -9,9 +9,6 @@ namespace Cleanic.Application
     {
         Task Do(ICommand command);
 
-        /// <summary>
-        /// Query the application for some data.
-        /// </summary>
         Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
             where TEntity : IEntity
             where TProjection : IProjection<TEntity>;

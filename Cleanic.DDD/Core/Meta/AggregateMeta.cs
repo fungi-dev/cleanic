@@ -8,11 +8,12 @@ namespace Cleanic.Core
 {
     public class AggregateMeta : EntityMeta
     {
-        public AggregateMeta(Type aggregateType) : base(aggregateType)
+        public AggregateMeta(Type aggregateType, DomainFacade domain) : base(aggregateType)
         {
             var nestedTypes = Type.GetTypeInfo().DeclaredNestedTypes;
+
             var projectionTypes = nestedTypes.Where(x => x.IsProjection());
-            Projections = projectionTypes.Select(x => new ProjectionMeta(x.AsType())).ToImmutableHashSet();
+            Projections = projectionTypes.Select(x => new ProjectionMeta(x.AsType(), domain)).ToImmutableHashSet();
         }
 
         public IReadOnlyCollection<ProjectionMeta> Projections { get; }

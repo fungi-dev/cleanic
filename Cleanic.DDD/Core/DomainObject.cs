@@ -28,6 +28,16 @@ namespace Cleanic.Core
                 {
                     if (!String.Equals(str1, str2, StringComparison.Ordinal)) return false;
                 }
+                else if (components[i] is DateTime dt1 && otherComponents[i] is DateTime dt2)
+                {
+                    if (dt1.Year != dt2.Year) return false;
+                    if (dt1.Month != dt2.Month) return false;
+                    if (dt1.Day != dt2.Day) return false;
+                    if (dt1.Hour != dt2.Hour) return false;
+                    if (dt1.Minute != dt2.Minute) return false;
+                    if (dt1.Second != dt2.Second) return false;
+                    if (dt1.Millisecond != dt2.Millisecond) return false;
+                }
                 else
                 {
                     if (!Equals(components[i], otherComponents[i])) return false;

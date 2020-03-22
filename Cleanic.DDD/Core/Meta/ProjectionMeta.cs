@@ -8,21 +8,28 @@ namespace Cleanic.Core
 {
     public class ProjectionMeta : IProjectionMeta
     {
-        public ProjectionMeta(Type projectionType)
+        public ProjectionMeta(Type projectionType, DomainFacade domain)
         {
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
+            _domain = domain ?? throw new ArgumentNullException(nameof(domain));
 
             _applyMethods = Type.GetRuntimeMethods()
                 .Where(x => !x.IsStatic)
                 .Where(x => x.GetParameters().Length == 1)
                 .Where(x => x.GetParameters()[0].ParameterType.IsEvent())
                 .ToArray();
-            var events = _applyMethods.Select(x => x.GetParameters()[0].ParameterType);
-            Events = events.Select(x => new EventMeta(x)).ToImmutableHashSet();
         }
 
         public Type Type { get; }
-        public IReadOnlyCollection<EventMeta> Events { get; }
+        public IReadOnlyCollection<EventMeta> Events
+        {
+            get
+            {
+                if (_events != null) return _events;
+                var eventTypes = _applyMethods.Select(x => x.GetParameters()[0].ParameterType);
+                return _events = eventTypes.Select(x => _domain.GetEventMeta(x)).ToImmutableHashSet();
+            }
+        }
 
         public void RunApplier(IProjection projection, IEvent @event)
         {
@@ -38,5 +45,7 @@ namespace Cleanic.Core
         }
 
         private readonly MethodInfo[] _applyMethods;
+        private readonly DomainFacade _domain;
+        private ImmutableHashSet<EventMeta> _events;
     }
 }

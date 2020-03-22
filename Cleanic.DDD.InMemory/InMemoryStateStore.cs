@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cleanic.Framework
 {
-    public class InMemoryStateStore : IStateStore
+    public class InMemoryStateStore : IProjectionStore
     {
         public Task<IProjection> Load(IIdentity id, Type type)
         {

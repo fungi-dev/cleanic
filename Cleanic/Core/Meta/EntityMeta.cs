@@ -19,7 +19,7 @@ namespace Cleanic.Core
             Commands = commandTypes.Select(x => new CommandMeta(x.AsType(), this)).ToImmutableHashSet();
 
             var eventTypes = nestedTypes.Where(x => x.IsEvent());
-            Events = eventTypes.Select(x => new EventMeta(x.AsType())).ToImmutableHashSet();
+            Events = eventTypes.Select(x => new EventMeta(x.AsType(), this)).ToImmutableHashSet();
         }
 
         public String Name { get; }

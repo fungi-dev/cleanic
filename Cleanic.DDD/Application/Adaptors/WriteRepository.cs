@@ -17,7 +17,7 @@ namespace Cleanic.Application
         {
             var agg = (IAggregate)Activator.CreateInstance(type, id);
             var aggMeta = ((DomainFacade)_domain).GetAggregateMeta(agg);
-            var persistedEvents = await _events.LoadEvents(aggMeta, id);
+            var persistedEvents = await _events.LoadEvents(aggMeta.Name, id.Value);
             agg.LoadFromHistory(persistedEvents);
             return agg as IEntity;
         }
@@ -29,7 +29,7 @@ namespace Cleanic.Application
             if (agg.ProducedEvents.Any())
             {
                 var persistedVersion = Convert.ToUInt32(agg.Version - agg.ProducedEvents.Count);
-                await _events.SaveEvents(aggMeta, agg.Id, agg.ProducedEvents, persistedVersion);
+                await _events.SaveEvents(aggMeta.Name, agg.Id.Value, agg.ProducedEvents, persistedVersion);
             }
             return agg.ProducedEvents.ToArray();
         }

@@ -17,7 +17,7 @@ namespace Cleanic.Application
 
             foreach (var eventMeta in _domain.ApplyingEvents)
             {
-                var projectionMetas = _domain.ApplyingEvent(eventMeta).Where(x => _cfg.ProjectionsToMaterialize.Contains(x.Type));
+                var projectionMetas = _domain.ApplyingEvent(eventMeta.Type).Where(x => _cfg.ProjectionsToMaterialize.Contains(x.Type));
                 if (!projectionMetas.Any()) continue;
                 _bus.ListenEvents(eventMeta.Type, e => ApplyEvent(e));
             }
@@ -25,7 +25,7 @@ namespace Cleanic.Application
 
         private async Task ApplyEvent(IEvent @event)
         {
-            var projectionMetas = _domain.ApplyingEvent(new EventMeta(@event.GetType()));
+            var projectionMetas = _domain.ApplyingEvent(@event.GetType());
             foreach (var projectionMeta in projectionMetas.Where(x => _cfg.ProjectionsToMaterialize.Contains(x.Type)))
             {
                 var id = projectionMeta.GetProjectionIdFromAffectingEvent(@event);

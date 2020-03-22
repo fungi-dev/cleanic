@@ -61,7 +61,7 @@ namespace Cleanic.Core
         private MethodInfo GetApplierOfConcreteEvent(Type eventType)
         {
             var methods = typeof(T).GetRuntimeMethods().Where(x => x.GetParameters().Length == 1);
-            return methods.Single(x => x.GetParameters()[0].ParameterType == eventType);
+            return methods.SingleOrDefault(x => x.GetParameters()[0].ParameterType == eventType);
         }
 
         private readonly List<IEvent> _changes = new List<IEvent>();

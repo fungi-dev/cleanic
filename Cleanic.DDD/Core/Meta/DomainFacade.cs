@@ -11,8 +11,8 @@ namespace Cleanic.Core
     {
         public DomainFacade(params Type[] aggregateOrSagaTypes)
         {
-            _aggregates = aggregateOrSagaTypes.Where(x => x.IsAggregate()).Select(x => new AggregateMeta(x)).ToArray();
-            _sagas = aggregateOrSagaTypes.Where(x => x.IsSaga()).Select(x => new SagaMeta(x)).ToArray();
+            _aggregates = aggregateOrSagaTypes.Where(x => x.IsAggregate()).Select(x => new AggregateMeta(x, this)).ToArray();
+            _sagas = aggregateOrSagaTypes.Where(x => x.IsSaga()).Select(x => new SagaMeta(x, this)).ToArray();
 
             var projections = _aggregates.SelectMany(x => x.Projections);
             ApplyingEvents = projections.SelectMany(x => x.Events).ToImmutableHashSet();
@@ -23,18 +23,21 @@ namespace Cleanic.Core
         public IReadOnlyCollection<EventMeta> ApplyingEvents { get; }
         public IReadOnlyCollection<EventMeta> ReactingEvents { get; }
 
+        //todo move to DDD-specific application layer
         public void ApplyEvent(IProjection projection, IEvent @event)
         {
             var meta = _aggregates.SelectMany(x => x.Projections).Single(x => x.Type == projection.GetType());
             meta.RunApplier(projection, @event);
         }
 
+        //todo move to DDD-specific application layer
         public void ModifyEntity(IEntity entity, ICommand command)
         {
             var meta = _aggregates.Single(x => x.Type == entity.GetType());
             meta.RunHandler((IAggregate)entity, command);
         }
 
+        //todo move to DDD-specific application layer
         public async Task<ICommand[]> ReactToEvent(IEvent @event)
         {
             var cmds = new List<ICommand>();
@@ -46,8 +49,10 @@ namespace Cleanic.Core
             return cmds.ToArray();
         }
 
-        public IReadOnlyCollection<IProjectionMeta> ApplyingEvent(EventMeta eventMeta)
+        //todo move to DDD-specific application layer
+        public IReadOnlyCollection<IProjectionMeta> ApplyingEvent(Type eventType)
         {
+            var eventMeta = _aggregates.SelectMany(x => x.Events).Single(x => x.Type == eventType);
             var projections = new List<ProjectionMeta>();
             foreach (var projection in _aggregates.SelectMany(x => x.Projections))
             {
@@ -64,6 +69,11 @@ namespace Cleanic.Core
         public EventMeta GetEventMeta(IEvent @event)
         {
             return _aggregates.SelectMany(x => x.Events).Single(x => x.Type == @event.GetType());
+        }
+
+        public EventMeta GetEventMeta(Type eventType)
+        {
+            return _aggregates.SelectMany(x => x.Events).Single(x => x.Type == eventType);
         }
 
         public IProjectionMeta GetProjectionMeta(IProjection projection)

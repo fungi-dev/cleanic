@@ -11,7 +11,7 @@ namespace Cleanic.Core
         public CommandMeta(Type commandType, EntityMeta entityMeta)
         {
             Type = commandType ?? throw new ArgumentNullException(nameof(commandType));
-            Entity = entityMeta;
+            Entity = entityMeta ?? throw new ArgumentNullException(nameof(entityMeta));
         }
 
         public Type Type { get; }
