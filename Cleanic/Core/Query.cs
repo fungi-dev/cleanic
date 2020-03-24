@@ -11,10 +11,15 @@
         new IIdentity<T> Id { get; set; }
     }
 
-    public interface IQuery<TEntity, TProjection>
+    public interface IQuery
+    {
+        IIdentity Id { get; set; }
+    }
+
+    public interface IQuery<TEntity, TProjection> : IQuery
         where TEntity : IEntity
         where TProjection : IProjection<TEntity>
     {
-        IIdentity<TEntity> Id { get; set; }
+        new IIdentity<TEntity> Id { get; set; }
     }
 }

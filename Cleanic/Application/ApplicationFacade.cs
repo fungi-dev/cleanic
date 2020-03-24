@@ -1,5 +1,6 @@
 ﻿using Cleanic.Core;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Cleanic.Application
@@ -7,19 +8,26 @@ namespace Cleanic.Application
     //todo do logging
     public interface IApplicationFacade
     {
+        IDomainFacade Domain { get; }
+
         Task Do(ICommand command);
 
         Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
             where TEntity : IEntity
             where TProjection : IProjection<TEntity>;
+
+        Task<IProjection> Get(IQuery query);
     }
 
     public class ApplicationFacade : IApplicationFacade
     {
-        public ApplicationFacade(ICommandBus bus, IReadRepository db)
+        public IDomainFacade Domain { get; }
+
+        public ApplicationFacade(ICommandBus bus, IReadRepository db, IDomainFacade domain)
         {
             _bus = bus;
             _db = db;
+            Domain = domain;
         }
 
         public async Task Do(ICommand command)
@@ -43,6 +51,12 @@ namespace Cleanic.Application
             //todo do authorization
 
             return (TProjection)await _db.Load(typeof(TProjection), query.Id);
+        }
+
+        public async Task<IProjection> Get(IQuery query)
+        {
+            var prjType = query.GetType().GetTypeInfo().DeclaringType;
+            return await _db.Load(prjType, query.Id);
         }
 
         private readonly ICommandBus _bus;

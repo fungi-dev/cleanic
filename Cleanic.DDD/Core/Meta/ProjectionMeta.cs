@@ -11,7 +11,11 @@ namespace Cleanic.Core
         public ProjectionMeta(Type projectionType, DomainFacade domain)
         {
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
+            Name = projectionType.Name;
             _domain = domain ?? throw new ArgumentNullException(nameof(domain));
+
+            var nestedTypes = Type.GetTypeInfo().DeclaredNestedTypes;
+            Queries = nestedTypes.Where(x => x.IsQuery()).Select(x => x.AsType()).ToImmutableHashSet();
 
             _applyMethods = Type.GetRuntimeMethods()
                 .Where(x => !x.IsStatic)
@@ -20,7 +24,9 @@ namespace Cleanic.Core
                 .ToArray();
         }
 
+        public String Name { get; }
         public Type Type { get; }
+        public IReadOnlyCollection<Type> Queries { get; }
         public IReadOnlyCollection<EventMeta> Events
         {
             get

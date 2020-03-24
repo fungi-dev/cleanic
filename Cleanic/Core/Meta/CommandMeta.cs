@@ -30,16 +30,6 @@ namespace Cleanic.Core
         }
 
         public override String ToString() => Type.Name;
-
-        public static Boolean operator ==(CommandMeta left, CommandMeta right)
-        {
-            return EqualityComparer<CommandMeta>.Default.Equals(left, right);
-        }
-
-        public static Boolean operator !=(CommandMeta left, CommandMeta right)
-        {
-            return !(left == right);
-        }
     }
 
     public static class CommandTypeExtensions

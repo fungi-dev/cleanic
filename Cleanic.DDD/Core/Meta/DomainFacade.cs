@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Cleanic.Core
@@ -84,6 +85,21 @@ namespace Cleanic.Core
         public AggregateMeta GetAggregateMeta(IAggregate aggregate)
         {
             return _aggregates.Single(x => x.Type == aggregate.GetType());
+        }
+
+        public Type FindCommand(String aggregateName, String commandName)
+        {
+            var aggregate = _aggregates.Single(x => String.Equals(x.Type.Name, aggregateName, StringComparison.OrdinalIgnoreCase));
+            var commands = aggregate.Type.GetTypeInfo().DeclaredNestedTypes
+                                    .Where(x => typeof(ICommand).GetTypeInfo().IsAssignableFrom(x));
+            return commands.Single(x => String.Equals(x.Name, commandName, StringComparison.OrdinalIgnoreCase)).AsType();
+        }
+
+        public Type FindQuery(String aggregateName, String projectionName, String queryName)
+        {
+            var aggregate = _aggregates.Single(x => String.Equals(x.Name, aggregateName, StringComparison.OrdinalIgnoreCase));
+            var projection = _aggregates.SelectMany(x => x.Projections).Single(x => String.Equals(x.Name, projectionName, StringComparison.OrdinalIgnoreCase));
+            return projection.Queries.Single(x => String.Equals(x.Name, queryName, StringComparison.OrdinalIgnoreCase));
         }
 
         private readonly AggregateMeta[] _aggregates;

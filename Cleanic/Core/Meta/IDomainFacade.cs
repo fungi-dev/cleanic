@@ -25,5 +25,9 @@ namespace Cleanic.Core
         EventMeta GetEventMeta(Type eventType);
 
         IProjectionMeta GetProjectionMeta(IProjection projection);
+
+        Type FindCommand(String aggregateName, String commandName);
+
+        Type FindQuery(String aggregateName, String projectionName, String queryName);
     }
 }
