@@ -10,10 +10,11 @@ namespace Cleanic.Core
     //todo do logging
     public class DomainFacade : IDomainFacade
     {
-        public DomainFacade(params Type[] aggregateOrSagaTypes)
+        public DomainFacade(params Type[] aggregateOrSagaOrServiceTypes)
         {
-            _aggregates = aggregateOrSagaTypes.Where(x => x.IsAggregate()).Select(x => new AggregateMeta(x, this)).ToArray();
-            _sagas = aggregateOrSagaTypes.Where(x => x.IsSaga()).Select(x => new SagaMeta(x, this)).ToArray();
+            _aggregates = aggregateOrSagaOrServiceTypes.Where(x => x.Is<IAggregate>()).Select(x => new AggregateMeta(x, this)).ToArray();
+            _sagas = aggregateOrSagaOrServiceTypes.Where(x => x.Is<ISaga>()).Select(x => new SagaMeta(x, this)).ToArray();
+            _services = aggregateOrSagaOrServiceTypes.Where(x => x.Is<IDomainService>()).Select(x => (IDomainService)Activator.CreateInstance(x)).ToArray();
 
             var projections = _aggregates.SelectMany(x => x.Projections);
             ApplyingEvents = projections.SelectMany(x => x.Events).ToImmutableHashSet();
@@ -32,10 +33,21 @@ namespace Cleanic.Core
         }
 
         //todo move to DDD-specific application layer
-        public void ModifyEntity(IEntity entity, ICommand command)
+        public async Task ModifyEntity(IEntity entity, ICommand command)
         {
-            var meta = _aggregates.Single(x => x.Type == entity.GetType());
-            meta.RunHandler((IAggregate)entity, command);
+            var aggregate = (IAggregate)entity;
+
+            var serviceTypes = aggregate.GetDependencies(command);
+
+            //todo use DI
+            var services = new List<IDomainService>();
+            foreach (var svcType in serviceTypes)
+            {
+                var svcs = _services.Where(x => svcType.GetTypeInfo().IsAssignableFrom(x.GetType().GetTypeInfo()));
+                services.AddRange(svcs);
+            }
+
+            await aggregate.Do(command, services);
         }
 
         //todo move to DDD-specific application layer
@@ -104,5 +116,6 @@ namespace Cleanic.Core
 
         private readonly AggregateMeta[] _aggregates;
         private readonly SagaMeta[] _sagas;
+        private readonly IDomainService[] _services;
     }
 }

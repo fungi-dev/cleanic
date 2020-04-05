@@ -2,10 +2,10 @@
 
 namespace Cleanic.Core
 {
-    public abstract class Identity<T> : ValueObject, IIdentity<T>
+    public class Id<T> : ValueObject, IIdentity<T>
         where T : IEntity<T>
     {
-        protected Identity(String value)
+        public Id(String value)
         {
             Value = value;
         }

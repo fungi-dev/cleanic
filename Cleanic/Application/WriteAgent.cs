@@ -29,7 +29,7 @@ namespace Cleanic.Application
         {
             var cmdMeta = _domain.GetCommandMeta(cmd);
             var entity = await _db.LoadOrCreate(cmd.EntityId, cmdMeta.Entity.Type);
-            _domain.ModifyEntity(entity, cmd);
+            await _domain.ModifyEntity(entity, cmd);
             var events = await _db.Save(entity);
             if (_db != _evtBus)
             {

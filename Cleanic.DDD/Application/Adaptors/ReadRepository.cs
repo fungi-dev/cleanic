@@ -26,6 +26,7 @@ namespace Cleanic.Application
             {
                 projection = (IProjection)Activator.CreateInstance(type);
                 var projectionMeta = _domain.GetProjectionMeta(projection);
+                if (!projectionMeta.Events.Any()) return null;
                 var events = await _events.LoadEvents(projectionMeta.Events);
                 if (!events.Any()) return null;
                 foreach (var @event in events)

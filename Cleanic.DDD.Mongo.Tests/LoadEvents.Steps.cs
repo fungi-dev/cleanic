@@ -43,7 +43,7 @@ namespace Cleanic.Framework.Tests
         {
             public class Self : Entity<Self> { public Self(Id id) : base(id) { } }
             public class Evt : Event<Self> { public Evt(IIdentity<Self> id) : base(id) { } }
-            public new class Id : Identity<Self> { public Id(String value) : base(value) { } }
+            public new class Id : Id<Self> { public Id(String value) : base(value) { } }
             public Agg(IIdentity id) : base(id) { }
         }
     }
