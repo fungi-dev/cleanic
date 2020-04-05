@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Cleanic.Core
 {
@@ -30,18 +27,5 @@ namespace Cleanic.Core
         }
 
         public override String ToString() => Type.Name;
-    }
-
-    public static class CommandTypeExtensions
-    {
-        public static Boolean IsCommand(this Type type) => type.GetTypeInfo().IsCommand();
-        public static Boolean IsCommand(this TypeInfo type) => type.AsType() == typeof(ICommand) || type.ImplementedInterfaces.Contains(typeof(ICommand));
-        public static Boolean IsCommandCollection(this Type type) => type.GetTypeInfo().IsCommandCollection();
-        public static Boolean IsCommandCollection(this TypeInfo type)
-        {
-            if (type.IsSubclassOf(typeof(Task))) type = type.GenericTypeArguments[0].GetTypeInfo();
-            if (!type.IsArray) return false;
-            return type.GetElementType().IsCommand();
-        }
     }
 }

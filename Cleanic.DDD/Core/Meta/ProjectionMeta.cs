@@ -15,12 +15,12 @@ namespace Cleanic.Core
             _domain = domain ?? throw new ArgumentNullException(nameof(domain));
 
             var nestedTypes = Type.GetTypeInfo().DeclaredNestedTypes;
-            Queries = nestedTypes.Where(x => x.IsQuery()).Select(x => x.AsType()).ToImmutableHashSet();
+            Queries = nestedTypes.Where(x => x.Is<IQuery>()).Select(x => x.AsType()).ToImmutableHashSet();
 
             _applyMethods = Type.GetRuntimeMethods()
                 .Where(x => !x.IsStatic)
                 .Where(x => x.GetParameters().Length == 1)
-                .Where(x => x.GetParameters()[0].ParameterType.IsEvent())
+                .Where(x => x.GetParameters()[0].Is<IEvent>())
                 .ToArray();
         }
 
@@ -46,7 +46,7 @@ namespace Cleanic.Core
         public IIdentity GetProjectionIdFromAffectingEvent(IEvent @event)
         {
             var staticMethods = Type.GetRuntimeMethods().Where(x => x.IsStatic);
-            var getIdMethod = staticMethods.Where(x => x.GetParameters().Length == 1).SingleOrDefault(x => x.GetParameters()[0].ParameterType.IsEvent());
+            var getIdMethod = staticMethods.Where(x => x.GetParameters().Length == 1).SingleOrDefault(x => x.GetParameters()[0].Is<IEvent>());
             return (IIdentity)getIdMethod?.Invoke(null, new[] { @event }) ?? @event.EntityId;
         }
 

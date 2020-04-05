@@ -16,7 +16,7 @@ namespace Cleanic.Core
 
         Task<ICommand[]> ReactToEvent(IEvent @event);
 
-        void ModifyEntity(IEntity entity, ICommand command);
+        Task ModifyEntity(IEntity entity, ICommand command);
 
         CommandMeta GetCommandMeta(ICommand command);
 

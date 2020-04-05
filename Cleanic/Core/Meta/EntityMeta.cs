@@ -15,10 +15,10 @@ namespace Cleanic.Core
 
             var nestedTypes = Type.GetTypeInfo().DeclaredNestedTypes;
 
-            var commandTypes = nestedTypes.Where(x => x.IsCommand());
+            var commandTypes = nestedTypes.Where(x => x.Is<ICommand>());
             Commands = commandTypes.Select(x => new CommandMeta(x.AsType(), this)).ToImmutableHashSet();
 
-            var eventTypes = nestedTypes.Where(x => x.IsEvent());
+            var eventTypes = nestedTypes.Where(x => x.Is<IEvent>());
             Events = eventTypes.Select(x => new EventMeta(x.AsType(), this)).ToImmutableHashSet();
         }
 

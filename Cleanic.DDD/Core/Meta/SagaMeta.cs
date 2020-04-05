@@ -13,10 +13,14 @@ namespace Cleanic.Core
         {
             Type = sagaType ?? throw new ArgumentNullException(nameof(sagaType));
 
-            var methodsWithEventParam = Type.GetRuntimeMethods().Where(x => x.GetParameters().Length == 1 && x.GetParameters()[0].ParameterType.IsEvent());
-            _reactMethods = methodsWithEventParam.Where(x => x.ReturnType.IsCommandCollection()).ToArray();
-            var events = _reactMethods.Select(x => x.GetParameters()[0].ParameterType);
-            Events = events.Select(x => domain.GetEventMeta(x)).ToImmutableHashSet();
+            _reactMethods = Type.GetRuntimeMethods()
+                .Where(m => m.DeclaringType != typeof(Saga))
+                .Where(m => m.Returns<ICommand>())
+                .ToArray();
+
+            Events = _reactMethods
+                .Select(m => domain.GetEventMeta(m.GetParameters().Single().ParameterType))
+                .ToImmutableHashSet();
         }
 
         public Type Type { get; }
@@ -30,11 +34,5 @@ namespace Cleanic.Core
         }
 
         private readonly MethodInfo[] _reactMethods;
-    }
-
-    public static class SagaTypeExtensions
-    {
-        public static Boolean IsSaga(this Type type) => type.GetTypeInfo().IsSaga();
-        public static Boolean IsSaga(this TypeInfo type) => type.IsSubclassOf(typeof(Saga));
     }
 }

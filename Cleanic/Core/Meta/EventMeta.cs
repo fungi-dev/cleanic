@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace Cleanic.Core
 {
@@ -32,21 +29,5 @@ namespace Cleanic.Core
         }
 
         public override String ToString() => Name;
-    }
-
-    public static class EventTypeExtensions
-    {
-        public static Boolean IsEvent(this Type type) => type.GetTypeInfo().IsEvent();
-        public static Boolean IsEvent(this TypeInfo type) => type.AsType() == typeof(IEvent) || type.ImplementedInterfaces.Contains(typeof(IEvent));
-
-        public static Boolean IsError(this Type type) => type.GetTypeInfo().IsError();
-        public static Boolean IsError(this TypeInfo type) => type.AsType() == typeof(IError) || type.ImplementedInterfaces.Contains(typeof(IError));
-        public static Boolean IsErrorCollection(this Type type) => type.GetTypeInfo().IsErrorCollection();
-        public static Boolean IsErrorCollection(this TypeInfo type)
-        {
-            if (!type.ImplementedInterfaces.Contains(typeof(IEnumerable))) return false;
-            if (!type.IsGenericType) return false;
-            return type.GenericTypeArguments[0].IsError();
-        }
     }
 }
