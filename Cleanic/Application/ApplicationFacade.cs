@@ -6,31 +6,18 @@ using System.Threading.Tasks;
 namespace Cleanic.Application
 {
     //todo do logging
-    public interface IApplicationFacade
+    public class ApplicationFacade
     {
-        IDomainFacade Domain { get; }
+        public DomainMeta Domain { get; }
 
-        Task Do(ICommand command);
-
-        Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
-            where TEntity : IEntity
-            where TProjection : IProjection<TEntity>;
-
-        Task<IProjection> Get(IQuery query);
-    }
-
-    public class ApplicationFacade : IApplicationFacade
-    {
-        public IDomainFacade Domain { get; }
-
-        public ApplicationFacade(ICommandBus bus, IReadRepository db, IDomainFacade domain)
+        public ApplicationFacade(ICommandBus bus, IReadRepository db, DomainMeta domain)
         {
             _bus = bus;
             _db = db;
             Domain = domain;
         }
 
-        public async Task Do(ICommand command)
+        public async Task Do(Command command)
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
 
@@ -42,21 +29,21 @@ namespace Cleanic.Application
             await _bus.Send(command);
         }
 
-        public async Task<TProjection> Get<TEntity, TProjection>(IQuery<TEntity, TProjection> query)
-            where TEntity : IEntity
-            where TProjection : IProjection<TEntity>
+        public async Task<TProjection> Get<TEntity, TProjection>(Query query)
+            where TEntity : Entity
+            where TProjection : Projection
         {
             //todo serve multitanancy
             //todo do authentication
             //todo do authorization
 
-            return (TProjection)await _db.Load(typeof(TProjection), query.Id);
+            return (TProjection)await _db.Load(typeof(TProjection), query.AggregateId);
         }
 
-        public async Task<IProjection> Get(IQuery query)
+        public async Task<Projection> Get(Query query)
         {
             var prjType = query.GetType().GetTypeInfo().DeclaringType;
-            return await _db.Load(prjType, query.Id);
+            return await _db.Load(prjType, query.AggregateId);
         }
 
         private readonly ICommandBus _bus;

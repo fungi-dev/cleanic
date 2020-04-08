@@ -9,12 +9,12 @@ namespace Cleanic.Application
         /// <summary>
         /// Publish the event that will be caught by all interested subscribers.
         /// </summary>
-        Task Publish(IEvent @event);
+        Task Publish(Event @event);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of event.
         /// All registered actions will be called when such event will take place.
         /// </summary>
-        void ListenEvents(Type eventType, Func<IEvent, Task> listener);
+        void ListenEvents(Type eventType, Func<Event, Task> listener);
     }
 }

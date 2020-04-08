@@ -9,12 +9,12 @@ namespace Cleanic.Application
         /// <summary>
         /// Send the command with hope that some handler will catch it.
         /// </summary>
-        Task Send(ICommand command);
+        Task Send(Command command);
 
         /// <summary>
         /// Register the action which will handle all instances of some type of commands.
         /// The only one action can be for each type of command.
         /// </summary>
-        void HandleCommands(Func<ICommand, Task> handler);
+        void HandleCommands(Func<Command, Task> handler);
     }
 }
