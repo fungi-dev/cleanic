@@ -17,26 +17,30 @@ namespace Cleanic.Application
 
         public async Task<Projection> Load(Type type, String id)
         {
-            Projection projection;
+            var projectionMeta = _domain.GetProjectionMeta(type);
+            Projection projection = null;
+
             if (_cfg.ProjectionsToMaterialize.Contains(type))
             {
                 projection = await _states.Load(id, type);
             }
             else
             {
-                var projectionMeta = _domain.GetProjectionMeta(type);
-                if (!projectionMeta.Events.Any()) return null;
                 var events = await _events.LoadEvents(projectionMeta.Events);
-                if (!events.Any()) return null;
-                projection = (Projection)Activator.CreateInstance(type);
-                projection.AggregateId = id;
-                foreach (var @event in events)
+                if (events.Any())
                 {
-                    var idFromEvent = projectionMeta.GetIdFromEvent(@event);
-                    if (!idFromEvent.Equals(id)) continue;
-                    projectionMeta.HandleEvent(projection, @event);
+                    projection = (Projection)Activator.CreateInstance(type);
+                    projection.AggregateId = id;
+                    foreach (var @event in events)
+                    {
+                        var idFromEvent = projectionMeta.GetIdFromEvent(@event);
+                        if (!idFromEvent.Equals(id)) continue;
+                        projectionMeta.HandleEvent(projection, @event);
+                    }
                 }
             }
+
+            if (projection == null && projectionMeta.IsRoot) projection = (Projection)Activator.CreateInstance(type);
             return projection;
         }
 

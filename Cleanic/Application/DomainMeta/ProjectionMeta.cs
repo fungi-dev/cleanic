@@ -13,10 +13,12 @@ namespace Cleanic.Core
         public AggregateMeta Aggregate { get; }
         public IReadOnlyCollection<QueryMeta> Queries { get; internal set; }
         public IReadOnlyCollection<EventMeta> Events { get; internal set; }
+        public Boolean IsRoot { get; }
 
         public ProjectionMeta(TypeInfo projectionType, TypeInfo builderType, AggregateMeta aggregateMeta) : base(projectionType)
         {
             Aggregate = aggregateMeta ?? throw new ArgumentNullException(nameof(aggregateMeta));
+            IsRoot = aggregateMeta.IsRoot;
             _builderType = builderType;
         }
 

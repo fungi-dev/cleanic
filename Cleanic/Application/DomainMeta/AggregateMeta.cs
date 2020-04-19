@@ -10,10 +10,12 @@ namespace Cleanic.Core
         public IReadOnlyCollection<CommandMeta> Commands { get; internal set; }
         public IReadOnlyCollection<EventMeta> Events { get; internal set; }
         public IReadOnlyCollection<ProjectionMeta> Projections { get; internal set; }
+        public bool IsRoot { get; }
 
         public AggregateMeta(TypeInfo aggregateType, TypeInfo containerForAggregateMembers) : base(aggregateType)
         {
             Name = containerForAggregateMembers.Name;
+            IsRoot = containerForAggregateMembers.GetDeclaredField("RootId") != null;
         }
 
         public void InjectServices(IEnumerable<ServiceMeta> services)
