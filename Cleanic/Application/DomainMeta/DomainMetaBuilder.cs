@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
@@ -51,10 +52,16 @@ namespace Cleanic.Core
         public DomainMetaBuilder Service<T>()
             where T : Service
         {
-            AddDomainTypesFromAssembly(typeof(T).GetTypeInfo().Assembly);
+            return Service(() => (T)Activator.CreateInstance(typeof(T)));
+        }
 
-            var serviceType = typeof(T).GetTypeInfo();
-            _services.Add(serviceType);
+        public DomainMetaBuilder Service<T>(Func<T> serviceFactory)
+            where T : Service
+        {
+            var t = typeof(T).GetTypeInfo();
+            AddDomainTypesFromAssembly(t.Assembly);
+
+            _services.Add(t, serviceFactory);
             return this;
         }
 
@@ -86,9 +93,9 @@ namespace Cleanic.Core
             }
 
             var services = new List<ServiceMeta>();
-            foreach (var svcType in _services)
+            foreach (var svc in _services)
             {
-                var svcMeta = new ServiceMeta(svcType);
+                var svcMeta = new ServiceMeta(svc.Key, svc.Value);
                 var domainEvents = aggregates.SelectMany(x => x.Events);
                 var svcEvents = domainEvents.Where(x => svcMeta.IsHandlingEvent(x.Type));
                 svcMeta.Events = svcEvents.ToImmutableHashSet();
@@ -115,6 +122,6 @@ namespace Cleanic.Core
         private readonly Dictionary<TypeInfo, List<TypeInfo>> _aggregateProjections = new Dictionary<TypeInfo, List<TypeInfo>>();
         private readonly Dictionary<TypeInfo, List<TypeInfo>> _projectionQueries = new Dictionary<TypeInfo, List<TypeInfo>>();
         private readonly Dictionary<TypeInfo, TypeInfo> _projectionBuilders = new Dictionary<TypeInfo, TypeInfo>();
-        private readonly List<TypeInfo> _services = new List<TypeInfo>();
+        private readonly Dictionary<TypeInfo, Func<Service>> _services = new Dictionary<TypeInfo, Func<Service>>();
     }
 }

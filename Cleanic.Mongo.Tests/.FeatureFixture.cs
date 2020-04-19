@@ -6,7 +6,7 @@ namespace Cleanic.Framework.Tests
     {
         protected FeatureFixture()
         {
-            SUT = new MongoEventStore();
+            SUT = new MongoEventStore("mongodb+srv://admin:cVZelc4Uu6iMXGxj@alfacontext-db-af1cu.azure.mongodb.net?retryWrites=true&w=majority");
         }
 
         public void Dispose()

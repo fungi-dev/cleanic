@@ -12,9 +12,8 @@ namespace Cleanic.Framework
 {
     public class MongoEventStore : IEventStore
     {
-        public MongoEventStore()
+        public MongoEventStore(String connectionString)
         {
-            var connectionString = "mongodb+srv://admin:cVZelc4Uu6iMXGxj@alfacontext-db-af1cu.azure.mongodb.net?retryWrites=true&w=majority";
             _serializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,

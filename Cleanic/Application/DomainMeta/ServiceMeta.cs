@@ -9,9 +9,12 @@ namespace Cleanic.Core
     {
         public IReadOnlyCollection<EventMeta> Events { get; internal set; }
 
-        public ServiceMeta(TypeInfo serviceType) : base(serviceType) { }
+        public ServiceMeta(TypeInfo serviceType, Func<Service> serviceFactory) : base(serviceType)
+        {
+            _factory = serviceFactory;
+        }
 
-        public Service GetInstance() => (Service)Activator.CreateInstance(Type);
+        public Service GetInstance() => _factory.Invoke();
 
         public Boolean IsHandlingEvent(Type eventType)
         {
@@ -19,5 +22,7 @@ namespace Cleanic.Core
                 .Where(m => !m.IsStatic)
                 .Any(m => m.GetParameters().Any(p => p.ParameterType == eventType));
         }
+
+        private readonly Func<Service> _factory;
     }
 }
