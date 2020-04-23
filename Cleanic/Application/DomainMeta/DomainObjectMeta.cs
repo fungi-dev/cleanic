@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     public class DomainObjectMeta
     {

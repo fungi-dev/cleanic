@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     //todo do logging
     /// <summary>

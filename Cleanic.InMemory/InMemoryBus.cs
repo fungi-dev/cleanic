@@ -71,21 +71,18 @@ namespace Cleanic.Framework
                 var message = _queue.Dequeue();
                 var type = message.GetType();
 
-                if (message is Command)
+                if (message is Command command)
                 {
-                    if (_commandHandler == null) throw new Exception("Can't find command handler!");
-                    await _commandHandler((Command)message);
+                    if (_commandHandler == null) throw BadDomainException.NoCommandHandler(type);
+                    await _commandHandler(command);
                 }
 
-                if (message is Event)
+                if (message is Event @event)
                 {
                     if (_eventSubscribers.ContainsKey(type))
                     {
                         var handlers = new List<Func<Event, Task>>(_eventSubscribers[type]);
-                        foreach (var handler in handlers)
-                        {
-                            await handler((Event)message);
-                        }
+                        foreach (var handler in handlers) await handler(@event);
                     }
                 }
             }

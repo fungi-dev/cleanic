@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Cleanic.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     /// <summary>
     /// Describes projection and provide ability to use it regardless concrete domain specifics.
@@ -44,7 +45,7 @@ namespace Cleanic.Core
             var method = _builderType.DeclaredMethods
                 .Where(x => x.IsStatic)
                 .Where(x => x.GetParameters().Length == 1)
-                .SingleOrDefault(x => typeof(Event).GetTypeInfo().IsAssignableFrom(x.GetParameters()[0].ParameterType));
+                .SingleOrDefault(x => x.GetParameters()[0].ParameterType.GetTypeInfo().IsAssignableFrom(@event.GetType()));
             return (String)method?.Invoke(null, new[] { @event }) ?? @event.AggregateId;
         }
 

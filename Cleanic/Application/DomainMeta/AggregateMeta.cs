@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Cleanic.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     public class AggregateMeta : DomainObjectMeta
     {

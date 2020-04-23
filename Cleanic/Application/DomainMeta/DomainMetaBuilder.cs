@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Cleanic.Core;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     /// <summary>
     /// Helps build application domain from concrete objects specified.
@@ -42,7 +42,8 @@ namespace Cleanic.Core
 
                 var builder = _domainTypes
                     .Where(x => x.IsSubclassOf(typeof(ProjectionBuilder)))
-                    .Single(x => x.BaseType.GenericTypeArguments.Single() == projectionType.AsType());
+                    .SingleOrDefault(x => x.BaseType.GenericTypeArguments.Single() == projectionType.AsType());
+                if (builder == null) throw BadDomainException.NoProjectionBuilder(projectionType.AsType());
                 _projectionBuilders.Add(projectionType, builder);
             }
 
@@ -52,16 +53,9 @@ namespace Cleanic.Core
         public DomainMetaBuilder Service<T>()
             where T : Service
         {
-            return Service(() => (T)Activator.CreateInstance(typeof(T)));
-        }
-
-        public DomainMetaBuilder Service<T>(Func<T> serviceFactory)
-            where T : Service
-        {
-            var t = typeof(T).GetTypeInfo();
-            AddDomainTypesFromAssembly(t.Assembly);
-
-            _services.Add(t, serviceFactory);
+            AddDomainTypesFromAssembly(typeof(T).GetTypeInfo().Assembly);
+            var serviceType = typeof(T).GetTypeInfo();
+            _services.Add(serviceType);
             return this;
         }
 
@@ -93,9 +87,9 @@ namespace Cleanic.Core
             }
 
             var services = new List<ServiceMeta>();
-            foreach (var svc in _services)
+            foreach (var svcType in _services)
             {
-                var svcMeta = new ServiceMeta(svc.Key, svc.Value);
+                var svcMeta = new ServiceMeta(svcType);
                 var domainEvents = aggregates.SelectMany(x => x.Events);
                 var svcEvents = domainEvents.Where(x => svcMeta.IsHandlingEvent(x.Type));
                 svcMeta.Events = svcEvents.ToImmutableHashSet();
@@ -122,6 +116,6 @@ namespace Cleanic.Core
         private readonly Dictionary<TypeInfo, List<TypeInfo>> _aggregateProjections = new Dictionary<TypeInfo, List<TypeInfo>>();
         private readonly Dictionary<TypeInfo, List<TypeInfo>> _projectionQueries = new Dictionary<TypeInfo, List<TypeInfo>>();
         private readonly Dictionary<TypeInfo, TypeInfo> _projectionBuilders = new Dictionary<TypeInfo, TypeInfo>();
-        private readonly Dictionary<TypeInfo, Func<Service>> _services = new Dictionary<TypeInfo, Func<Service>>();
+        private readonly List<TypeInfo> _services = new List<TypeInfo>();
     }
 }

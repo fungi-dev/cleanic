@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     public class QueryMeta : DomainObjectMeta, IEquatable<QueryMeta>
     {

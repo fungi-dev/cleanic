@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cleanic.Core
+namespace Cleanic.Application
 {
     public class EventMeta : DomainObjectMeta, IEquatable<EventMeta>
     {
