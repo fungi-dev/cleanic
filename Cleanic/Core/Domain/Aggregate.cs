@@ -119,7 +119,7 @@ namespace Cleanic.Core
             if (isFresh)
             {
                 @event.AggregateId = Id;
-                @event.Moment = DateTime.UtcNow;
+                @event.EventOccurred = DateTime.UtcNow;
                 _changes.Add(@event);
             }
             var applier = GetApplierOfConcreteEvent(@event.GetType());

@@ -16,7 +16,7 @@ namespace Cleanic.Application
         public async Task<Aggregate> LoadOrCreate(String id, Type type)
         {
             var aggMeta = _domain.GetAggregateMeta(type);
-            var persistedEvents = await _events.LoadEvents(aggMeta.Name, id);
+            var persistedEvents = await _events.LoadEvents(aggMeta, id);
             var agg = (Aggregate)Activator.CreateInstance(type);
             if (!persistedEvents.Any()) agg.Id = id;
             else agg.LoadFromHistory(persistedEvents);
@@ -25,11 +25,10 @@ namespace Cleanic.Application
 
         public async Task<Event[]> Save(Aggregate aggregate)
         {
-            var aggMeta = _domain.GetAggregateMeta(aggregate.GetType());
             if (aggregate.ProducedEvents.Any())
             {
                 var persistedVersion = Convert.ToUInt32(aggregate.Version - aggregate.ProducedEvents.Count);
-                await _events.SaveEvents(aggMeta.Name, aggregate.Id, aggregate.ProducedEvents, persistedVersion);
+                await _events.SaveEvents(aggregate.Id, persistedVersion, aggregate.ProducedEvents);
             }
             return aggregate.ProducedEvents.ToArray();
         }

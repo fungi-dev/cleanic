@@ -18,7 +18,9 @@ namespace Cleanic.Application
             var containerForAggregateMembers = typeof(T);
             var aggregateType = _domainTypes
                 .Where(x => x.IsSubclassOf(typeof(Aggregate)))
-                .Single(x => x.BaseType.GenericTypeArguments.Single() == containerForAggregateMembers);
+                .SingleOrDefault(x => x.BaseType.GenericTypeArguments.SingleOrDefault() == containerForAggregateMembers);
+            if (aggregateType == null) throw BadDomainException.NoInternalAggregateClass(containerForAggregateMembers);
+
             _aggregates.Add(aggregateType, containerForAggregateMembers.GetTypeInfo());
             _aggregateCommands.Add(aggregateType, new List<TypeInfo>());
             _aggregateEvents.Add(aggregateType, new List<TypeInfo>());

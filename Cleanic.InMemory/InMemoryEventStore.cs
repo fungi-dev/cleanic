@@ -1,7 +1,6 @@
 ﻿using Cleanic.Application;
 using Cleanic.Core;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,44 +9,50 @@ namespace Cleanic.Framework
 {
     public class InMemoryEventStore : IEventStore
     {
-        public Task<Event[]> LoadEvents(String aggregateName, String aggregateId)
+        public InMemoryEventStore(DomainMeta domain)
         {
-            if (_dictionary.TryGetValue(Tuple.Create(aggregateName, aggregateId), out var list))
-                return Task.FromResult(list.ToArray());
-            return Task.FromResult(Array.Empty<Event>());
+            _domain = domain;
+        }
+
+        public Task<Event[]> LoadEvents(AggregateMeta aggregateMeta, String aggregateId)
+        {
+            var records = Db.Where(x => x.AggregateMeta == aggregateMeta && x.AggregateId == aggregateId);
+            return Task.FromResult(records.Select(x => x.Event).ToArray());
         }
 
         public Task<Event[]> LoadEvents(IEnumerable<EventMeta> eventMetas)
         {
-            var result = new List<Event>();
-            foreach (var eventMeta in eventMetas)
-            {
-                if (_eventsByType.TryGetValue(eventMeta.Name, out var list))
-                    result.AddRange(list);
-            }
-
-            return Task.FromResult(result.OrderBy(x => x.Moment).ToArray());
+            var records = Db.Where(x => eventMetas.Contains(x.EventMeta));
+            return Task.FromResult(records.Select(x => x.Event).ToArray());
         }
 
-        public Task SaveEvents(String aggregateName, String aggregateId, IEnumerable<Event> events, UInt32 expectedVersion)
+        public Task SaveEvents(String aggregateId, UInt32 expectedAggregateVersion, IEnumerable<Event> events)
         {
-            var key = Tuple.Create(aggregateName, aggregateId);
-            var list = _dictionary.GetOrAdd(key, tuple => new List<Event>(0));
-
-            if (list.Count != expectedVersion) throw new Exception("Concurrent access to event store!");
-
-            list.AddRange(events);
-            foreach (var @event in events)
+            var aggregateMeta = events.Select(x => _domain.GetEventMeta(x.GetType()).Aggregate).Distinct().Single();
+            var actualAggregateVersion = Db.Where(x => x.AggregateMeta == aggregateMeta && x.AggregateId == aggregateId).Count();
+            if (actualAggregateVersion != expectedAggregateVersion) throw new Exception("Concurrent access to event store");
+            foreach (var e in events)
             {
-                var eventType = @event.GetType();
-                var listOfType = _eventsByType.GetOrAdd(eventType.Name, new List<Event>());
-                listOfType.Add(@event);
+                Db.Add(new DataItem
+                {
+                    AggregateMeta = aggregateMeta,
+                    AggregateId = aggregateId,
+                    EventMeta = _domain.GetEventMeta(e.GetType()),
+                    Event = e
+                });
             }
-
             return Task.CompletedTask;
         }
 
-        private readonly ConcurrentDictionary<Tuple<String, String>, List<Event>> _dictionary = new ConcurrentDictionary<Tuple<String, String>, List<Event>>();
-        private readonly ConcurrentDictionary<String, List<Event>> _eventsByType = new ConcurrentDictionary<String, List<Event>>();
+        private readonly DomainMeta _domain;
+        public readonly List<DataItem> Db = new List<DataItem>();
+
+        public class DataItem
+        {
+            public AggregateMeta AggregateMeta;
+            public String AggregateId;
+            public EventMeta EventMeta;
+            public Event Event;
+        }
     }
 }

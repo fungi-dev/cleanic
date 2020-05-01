@@ -26,22 +26,37 @@ namespace Cleanic.Application
 
         public CommandMeta GetCommandMeta(Type commandType)
         {
-            return Aggregates.SelectMany(x => x.Commands).Single(x => x.Type == commandType);
+            var meta = Aggregates.SelectMany(x => x.Commands).SingleOrDefault(x => x.Type == commandType);
+            if (meta == null) throw PoorDomainException.NoCommand(commandType);
+            return meta;
         }
 
         public EventMeta GetEventMeta(Type eventType)
         {
-            return Aggregates.SelectMany(x => x.Events).Single(x => x.Type == eventType);
+            var meta = Aggregates.SelectMany(x => x.Events).SingleOrDefault(x => x.Type == eventType);
+            if (meta == null) throw PoorDomainException.NoEvent(eventType);
+            return meta;
+        }
+
+        public EventMeta GetEventMeta(String eventMetaName)
+        {
+            var meta = Aggregates.SelectMany(x => x.Events).SingleOrDefault(x => String.Equals(x.Name, eventMetaName, StringComparison.OrdinalIgnoreCase));
+            if (meta == null) throw PoorDomainException.NoEvent(eventMetaName);
+            return meta;
         }
 
         public ProjectionMeta GetProjectionMeta(Type projectionType)
         {
-            return Aggregates.SelectMany(x => x.Projections).Single(x => x.Type == projectionType);
+            var meta = Aggregates.SelectMany(x => x.Projections).SingleOrDefault(x => x.Type == projectionType);
+            if (meta == null) throw PoorDomainException.NoProjection(projectionType);
+            return meta;
         }
 
         public AggregateMeta GetAggregateMeta(Type aggregateType)
         {
-            return Aggregates.Single(x => x.Type == aggregateType);
+            var meta = Aggregates.SingleOrDefault(x => x.Type == aggregateType);
+            if (meta == null) throw PoorDomainException.NoAggregate(aggregateType);
+            return meta;
         }
 
         public Type FindCommand(String aggregateName, String commandName)

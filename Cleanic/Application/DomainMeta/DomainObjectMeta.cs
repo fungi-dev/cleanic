@@ -11,7 +11,7 @@ namespace Cleanic.Application
         public DomainObjectMeta(TypeInfo type)
         {
             Type = type.AsType() ?? throw new ArgumentNullException(nameof(type));
-            Name = type.Name;
+            Name = type.FullName.Replace("+", ".");
         }
 
         public override String ToString() => Name;
