@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <RootNamespace>Cleanic.Application</RootNamespace>
+    <AssemblyName>Cleanic.Application.WriteApplication</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Domain\Domain.csproj" />
+    <ProjectReference Include="..\ApplicationBase\ApplicationBase.csproj" />
+  </ItemGroup>
+
+</Project>
