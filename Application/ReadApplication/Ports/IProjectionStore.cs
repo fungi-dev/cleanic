@@ -6,8 +6,7 @@ namespace Cleanic.Application
 {
     public interface IProjectionStore
     {
-        Task<Projection> Load(String id, Type type);
+        Task<Projection> Load(ProjectionInfo projectionInfo, String aggregateId);
         Task Save(Projection projection);
-        Task Clear();
     }
 }

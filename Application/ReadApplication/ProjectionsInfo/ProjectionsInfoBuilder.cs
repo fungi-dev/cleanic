@@ -28,8 +28,7 @@ namespace Cleanic.Application
 
         public ProjectionsInfo Build()
         {
-            var materializing = new List<ProjectionInfo>();
-            var onTheFly = new List<ProjectionInfo>();
+            var projections = new List<ProjectionInfo>();
             foreach (var aggProjectionTypes in _projectionTypes)
             {
                 foreach (var projectionType in aggProjectionTypes.Value)
@@ -43,18 +42,12 @@ namespace Cleanic.Application
                         .Distinct();
                     projectionInfo.Events = eventTypes.Select(t => _languageInfo.GetEvent(t)).ToImmutableHashSet();
 
-                    if (_configuration.ProjectionsToMaterialize.Contains(projectionInfo.Type))
-                    {
-                        materializing.Add(projectionInfo);
-                    }
-                    else
-                    {
-                        onTheFly.Add(projectionInfo);
-                    }
+                    projectionInfo.Materialized = _configuration.ProjectionsToMaterialize.Contains(projectionInfo.Type);
+                    projections.Add(projectionInfo);
                 }
             }
 
-            return new ProjectionsInfo(materializing, onTheFly);
+            return new ProjectionsInfo(projections);
         }
 
         private readonly LanguageInfo _languageInfo;

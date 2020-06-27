@@ -13,7 +13,7 @@ namespace Cleanic.Application
             _projectionStore = projectionStore ?? throw new ArgumentNullException(nameof(projectionStore));
             _projectionsInfo = projectionsInfo ?? throw new ArgumentNullException(nameof(projectionsInfo));
 
-            foreach (var eventInfo in _projectionsInfo.MaterializingProjections.SelectMany(p => p.Events))
+            foreach (var eventInfo in _projectionsInfo.Projections.Where(x => x.Materialized).SelectMany(p => p.Events))
             {
                 _eventStore.ListenEvents(eventInfo, e => ApplyEvent(e));
             }
@@ -21,13 +21,36 @@ namespace Cleanic.Application
 
         private async Task ApplyEvent(Event @event)
         {
-            var toMaterialize = _projectionsInfo.MaterializingProjections.Where(p => p.Events.Any(m => m.Type == @event.GetType()));
-            foreach (var projectionInfo in toMaterialize)
+            foreach (var projectionInfo in _projectionsInfo.Projections.Where(x => x.Materialized))
             {
+                if (!projectionInfo.Events.Any(i => i.Type == @event.GetType())) continue;
+
                 var id = projectionInfo.GetIdFromEvent(@event);
-                var projection = await _projectionStore.Load(id, projectionInfo.Type);
-                if (projection == null) projection = (Projection)Activator.CreateInstance(projectionInfo.Type);
-                projection.Apply(@event);
+                var projection = await _projectionStore.Load(projectionInfo, id);
+                if (projection == null)
+                {
+                    projection = (Projection)Activator.CreateInstance(projectionInfo.Type);
+                    projection.AggregateId = id;
+                }
+
+                try
+                {
+                    projection.Apply(@event);
+                }
+                catch (Exception _)
+                {
+                    projection = (Projection)Activator.CreateInstance(projectionInfo.Type);
+                    projection.AggregateId = id;
+                    var events = await _eventStore.LoadEvents(projectionInfo.Events);
+                    foreach (var e in events)
+                    {
+                        var idFromEvent = projectionInfo.GetIdFromEvent(e);
+                        if (!idFromEvent.Equals(projection.AggregateId)) continue;
+                        projection.Apply(e);
+                    }
+                    projection.Apply(@event);
+                }
+
                 await _projectionStore.Save(projection);
             }
         }

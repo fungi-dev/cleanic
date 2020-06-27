@@ -8,11 +8,11 @@ namespace Cleanic.Framework
 {
     public class InMemoryProjectionStore : IProjectionStore
     {
-        public Task<Projection> Load(String id, Type type)
+        public Task<Projection> Load(ProjectionInfo projectionInfo, String aggregateId)
         {
-            if (!_db.ContainsKey(type)) return Task.FromResult<Projection>(null);
+            if (!_db.ContainsKey(projectionInfo.Type)) return Task.FromResult<Projection>(null);
 
-            return Task.FromResult(_db[type].ContainsKey(id) ? _db[type][id] : null);
+            return Task.FromResult(_db[projectionInfo.Type].ContainsKey(aggregateId) ? _db[projectionInfo.Type][aggregateId] : null);
         }
 
         public Task Save(Projection projection)

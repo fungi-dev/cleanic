@@ -10,14 +10,17 @@ namespace Cleanic.Application
     {
         public Type Type { get; }
         public String Name { get; }
+        public String FullName { get; }
         public AggregateInfo Aggregate { get; }
         public Boolean IsRoot { get; }
+        public Boolean Materialized { get; internal set; }
         public IReadOnlyCollection<EventInfo> Events { get; internal set; }
 
         public ProjectionInfo(Type projectionType, AggregateInfo aggregateInfo)
         {
             Type = projectionType ?? throw new ArgumentNullException(nameof(projectionType));
-            Name = projectionType.FullName.Replace("+", ".");
+            Name = projectionType.Name;
+            FullName = projectionType.FullName.Replace("+", ".");
             Aggregate = aggregateInfo ?? throw new ArgumentNullException(nameof(aggregateInfo));
             IsRoot = aggregateInfo.IsRoot;
         }

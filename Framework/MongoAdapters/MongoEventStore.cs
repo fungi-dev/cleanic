@@ -2,11 +2,14 @@
 using Cleanic.Core;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 
 namespace Cleanic.Framework
@@ -16,11 +19,22 @@ namespace Cleanic.Framework
         public MongoEventStore(String connectionString, ILogger<MongoEventStore> logger, LanguageInfo languageInfo)
         {
             if (String.IsNullOrWhiteSpace(connectionString)) throw new ArgumentNullException(nameof(connectionString));
+            var conventions = new ConventionPack
+            {
+                new IgnoreExtraElementsConvention(true)
+            };
+            ConventionRegistry.Register("Cleanic Conventions", conventions, t => true);
             _mongo = new MongoClient(connectionString);
+
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _languageInfo = languageInfo ?? throw new ArgumentNullException(nameof(languageInfo));
             _bus = new InMemoryEventBus(_logger);
             Db = _mongo.GetDatabase("events");
+
+            _serializationOptions = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+            };
         }
 
         public IMongoDatabase Db { get; private set; }
@@ -40,7 +54,7 @@ namespace Cleanic.Framework
                 var eventTypeName = doc.GetValue("eventType").AsString;
                 var eventType = _languageInfo.FindEvent(eventTypeName);
                 var eventData = doc.GetValue("eventData").AsString;
-                events.Add((Event)JsonSerializer.Deserialize(eventData, eventType));
+                events.Add((Event)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
             }
             return events.ToArray();
         }
@@ -63,7 +77,7 @@ namespace Cleanic.Framework
                         var eventTypeName = doc.GetValue("eventType").AsString;
                         var eventType = _languageInfo.FindEvent(eventTypeName);
                         var eventData = doc.GetValue("eventData").AsString;
-                        events.Add((Event)JsonSerializer.Deserialize(eventData, eventType));
+                        events.Add((Event)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
                     }
                 }
             }
@@ -94,7 +108,7 @@ namespace Cleanic.Framework
             {
                 expectedEventsCount++;
                 var eventMeta = _languageInfo.GetEvent(@event.GetType());
-                var eventData = JsonSerializer.Serialize(@event, @event.GetType());
+                var eventData = JsonSerializer.Serialize(@event, @event.GetType(), _serializationOptions);
                 var document = new BsonDocument
                 {
                     { "aggregateId", aggregateId },
@@ -125,5 +139,6 @@ namespace Cleanic.Framework
         private readonly IMongoClient _mongo;
         private readonly ILogger<MongoEventStore> _logger;
         private readonly InMemoryEventBus _bus;
+        private readonly JsonSerializerOptions _serializationOptions;
     }
 }

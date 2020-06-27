@@ -8,9 +8,10 @@ namespace Cleanic.Application
 {
     public abstract class QueryRunner
     {
-        public QueryRunner(IEventStore eventStore, Type queryType, ProjectionsInfo projectionsInfo, LanguageInfo languageInfo)
+        public QueryRunner(IEventStore eventStore, IProjectionStore projectionStore, Type queryType, ProjectionsInfo projectionsInfo, LanguageInfo languageInfo)
         {
             EventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
+            _projectionStore = projectionStore ?? throw new ArgumentNullException(nameof(projectionStore));
             if (queryType == null) throw new ArgumentNullException(nameof(queryType));
             Query = languageInfo.GetQuery(queryType);
             ProjectionsInfo = projectionsInfo ?? throw new ArgumentNullException(nameof(projectionsInfo));
@@ -25,7 +26,7 @@ namespace Cleanic.Application
 
             var task = (Task)GetRunMethod().Invoke(this, new Object[] { query });
             await task;
-            var taskResultProperty = typeof(Task<>).MakeGenericType(Query.ResultType).GetRuntimeProperty("Result");
+            var taskResultProperty = typeof(Task<>).MakeGenericType(Query.ResultType).GetRuntimeProperty(nameof(Task<Type>.Result));
             return (QueryResult)taskResultProperty.GetValue(task);
         }
 
@@ -35,12 +36,15 @@ namespace Cleanic.Application
         protected async Task<T> BuildProjection<T>(String id)
             where T : Projection, new()
         {
+            var projection = new T { AggregateId = id };
             var projectionInfo = ProjectionsInfo.GetProjection(typeof(T));
-            var projection = new T();
-            var events = await EventStore.LoadEvents(projectionInfo.Events);
-            if (events.Any())
+            if (projectionInfo.Materialized)
             {
-                projection.AggregateId = id;
+                projection = (T)await _projectionStore.Load(projectionInfo, id) ?? projection;
+            }
+            else
+            {
+                var events = await EventStore.LoadEvents(projectionInfo.Events);
                 foreach (var @event in events)
                 {
                     var idFromEvent = projectionInfo.GetIdFromEvent(@event);
@@ -50,6 +54,8 @@ namespace Cleanic.Application
             }
             return projection;
         }
+
+        private readonly IProjectionStore _projectionStore;
 
         private MethodInfo GetRunMethod()
         {

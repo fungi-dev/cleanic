@@ -40,7 +40,7 @@ namespace Cleanic.Core
             for (var i = 1; i < @params.Length; i++)
             {
                 var t = @params[i].ParameterType;
-                if (!t.IsArray) args.Add(dependencies.Single(x => x.GetType() == t));
+                if (!t.IsArray) args.Add(dependencies.Single(x => t.GetTypeInfo().IsAssignableFrom(x.GetType().GetTypeInfo())));
                 else
                 {
                     t = t.GetElementType();
@@ -50,6 +50,8 @@ namespace Cleanic.Core
                     args.Add(arg);
                 }
             }
+
+            //todo process nul result when return type is single event
             var returnType = method.ReturnType;
             if (returnType.GetTypeInfo().IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
