@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class AggregateItemInfo : TermInfo, IEquatable<AggregateItemInfo>
     {

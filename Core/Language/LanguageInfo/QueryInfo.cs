@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class QueryInfo : AggregateItemInfo
     {

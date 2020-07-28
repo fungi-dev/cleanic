@@ -3,20 +3,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class DomainInfo
     {
-        public IReadOnlyCollection<AggregateLogicInfo> Aggregates { get; }
-        public IReadOnlyCollection<SagaInfo> Sagas { get; }
-        public IReadOnlyCollection<ServiceInfo> Services { get; }
-
-        public DomainInfo(IEnumerable<AggregateLogicInfo> aggregates, IEnumerable<SagaInfo> sagas, IEnumerable<ServiceInfo> services)
-        {
-            Aggregates = aggregates.ToImmutableHashSet();
-            Sagas = sagas.ToImmutableHashSet();
-            Services = services.ToImmutableHashSet();
-        }
+        public IReadOnlyCollection<AggregateLogicInfo> Aggregates { get; internal set; }
+        public IReadOnlyCollection<SagaInfo> Sagas { get; internal set; }
+        public IReadOnlyCollection<ServiceInfo> Services { get; internal set; }
 
         public AggregateLogicInfo GetAggregateLogic(AggregateInfo aggregateInfo)
         {

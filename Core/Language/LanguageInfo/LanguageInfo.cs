@@ -1,18 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class LanguageInfo
     {
-        public IReadOnlyCollection<AggregateInfo> Aggregates { get; }
-
-        public LanguageInfo(IEnumerable<AggregateInfo> aggregates)
-        {
-            Aggregates = aggregates.ToImmutableHashSet();
-        }
+        public IReadOnlyCollection<AggregateInfo> Aggregates { get; internal set; }
 
         public AggregateInfo GetAggregate(Type aggregateType)
         {
@@ -44,19 +38,19 @@ namespace Cleanic.Application
 
         public Type FindQuery(String aggregateName, String queryName) => FindTerm(Aggregates.SelectMany(a => a.Queries), aggregateName, queryName);
 
+        public Type FindEvent(String eventFullName)
+        {
+            var e = eventFullName.ToLowerInvariant();
+            var info = Aggregates.SelectMany(a => a.Events).SingleOrDefault(x => String.Equals(x.FullName, e, StringComparison.OrdinalIgnoreCase));
+            return info?.Type ?? throw new Exception($"No event {eventFullName} in language");
+        }
+
         private Type FindTerm(IEnumerable<AggregateItemInfo> aggregateItems, String aggregateName, String aggregateItemName)
         {
             var a = aggregateName.ToLowerInvariant();
             var i = aggregateItemName.ToLowerInvariant();
             var aggregateItem = aggregateItems.SingleOrDefault(x => String.Equals(x.Aggregate.Name, a, StringComparison.OrdinalIgnoreCase) && String.Equals(x.Name, i, StringComparison.OrdinalIgnoreCase));
             return aggregateItem?.Type ?? throw new Exception($"No {aggregateItemName} in {aggregateName} aggregate");
-        }
-
-        public Type FindEvent(String eventFullName)
-        {
-            var e = eventFullName.ToLowerInvariant();
-            var info = Aggregates.SelectMany(a => a.Events).SingleOrDefault(x => String.Equals(x.FullName, e, StringComparison.OrdinalIgnoreCase));
-            return info?.Type ?? throw new Exception($"No event {eventFullName} in language");
         }
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class AggregateInfo : TermInfo
     {

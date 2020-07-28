@@ -10,7 +10,7 @@ namespace Cleanic.Application
     {
         protected EventStoreRequirements()
         {
-            LanguageInfo = new LanguageInfoBuilder().Aggregate<Agg>().Build();
+            LanguageInfo = new Lang();
             ConnectEventStore();
         }
 
@@ -89,6 +89,16 @@ namespace Cleanic.Application
         public class Agg
         {
             public class Evt : Event { }
+        }
+
+        public class Lang : LanguageInfo
+        {
+            public Lang()
+            {
+                new LanguageInfoBuilder()
+                    .Aggregate<Agg>()
+                    .Build(this);
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class ProjectionsInfoBuilder
     {
@@ -26,7 +26,7 @@ namespace Cleanic.Application
             return this;
         }
 
-        public ProjectionsInfo Build()
+        public void Build(ProjectionsInfo projectionsInfo)
         {
             var projections = new List<ProjectionInfo>();
             foreach (var aggProjectionTypes in _projectionTypes)
@@ -47,7 +47,7 @@ namespace Cleanic.Application
                 }
             }
 
-            return new ProjectionsInfo(projections);
+            projectionsInfo.Projections = projections.ToImmutableHashSet();
         }
 
         private readonly LanguageInfo _languageInfo;

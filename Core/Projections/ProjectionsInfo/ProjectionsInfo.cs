@@ -1,18 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class ProjectionsInfo
     {
-        public IReadOnlyCollection<ProjectionInfo> Projections { get; }
-
-        public ProjectionsInfo(IEnumerable<ProjectionInfo> projections)
-        {
-            Projections = projections.ToImmutableHashSet();
-        }
+        public IReadOnlyCollection<ProjectionInfo> Projections { get; internal set; }
 
         public ProjectionInfo GetProjection(Type projectionType)
         {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class CommandInfo : AggregateItemInfo
     {

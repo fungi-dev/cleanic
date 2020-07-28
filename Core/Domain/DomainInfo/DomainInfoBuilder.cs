@@ -5,7 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace Cleanic.Application
+namespace Cleanic
 {
     public class DomainInfoBuilder
     {
@@ -34,7 +34,7 @@ namespace Cleanic.Application
             return this;
         }
 
-        public DomainInfo Build()
+        public void Build(DomainInfo domainInfo)
         {
             var aggregates = new List<AggregateLogicInfo>();
             var services = new Dictionary<Type, ServiceInfo>();
@@ -84,7 +84,9 @@ namespace Cleanic.Application
                 sagas.Add(sagaInfo);
             }
 
-            return new DomainInfo(aggregates, sagas, services.Values);
+            domainInfo.Aggregates = aggregates.ToImmutableHashSet();
+            domainInfo.Sagas = sagas.ToImmutableHashSet();
+            domainInfo.Services = services.Values.ToImmutableHashSet();
         }
 
         private void AddDomainTypesFromAssembly(Assembly assembly)
