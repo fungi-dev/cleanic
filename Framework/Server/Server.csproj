@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <AssemblyName>Cleanic.Framework.Server</AssemblyName>
+        <RootNamespace>Cleanic.Framework</RootNamespace>
+        <UserSecretsId>1bbb752d-2a98-472f-9e21-65f32cdd5dd3</UserSecretsId>
+        <ApplicationInsightsResourceId>/subscriptions/4b37ac04-c432-4f88-a67a-b1e4c1e0b144/resourceGroups/alfacontext/providers/microsoft.insights/components/alfacontext-back</ApplicationInsightsResourceId>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.13.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.5" />
+        <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="3.1.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Application\ReadApplication\ReadApplication.csproj" />
+      <ProjectReference Include="..\..\Application\WriteApplication\WriteApplication.csproj" />
+      <ProjectReference Include="..\..\Core\Projections\Projections.csproj" />
+      <ProjectReference Include="..\InMemoryAdapters\InMemoryAdapters.csproj" />
+      <ProjectReference Include="..\MongoAdapters\MongoAdapters.csproj" />
+    </ItemGroup>
+
+</Project>
