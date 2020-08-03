@@ -68,4 +68,9 @@ namespace Cleanic.Core
                 .ToArray();
         }
     }
+
+    public class Action : Message
+    {
+        public String UserId { get; set; }
+    }
 }

@@ -8,25 +8,28 @@ namespace Cleanic.Application
 {
     public class ReadApplicationFacade
     {
-        public ReadApplicationFacade(IEventStore eventStore, IProjectionStore projectionStore, Func<Type, QueryRunner> queryRunnerFactory)
+        public ReadApplicationFacade(IEventStore eventStore, IProjectionStore projectionStore, Func<Type, QueryRunner> queryRunnerFactory, Authorization authorization, LanguageInfo languageInfo)
         {
             _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
             _projectionStore = projectionStore ?? throw new ArgumentNullException(nameof(projectionStore));
             _queryRunnerFactory = queryRunnerFactory ?? throw new ArgumentNullException(nameof(queryRunnerFactory));
+            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
+            _languageInfo = languageInfo ?? throw new ArgumentNullException(nameof(languageInfo));
         }
 
         public async Task<TQueryResult> Get<TQueryResult>(Query query)
             where TQueryResult : QueryResult
         {
-            //todo serve multitanancy
-            //todo do authentication
-            //todo do authorization
-
             return (TQueryResult)await Get(query);
         }
 
         public async Task<QueryResult> Get(Query query)
         {
+            if (query == null) throw new ArgumentNullException(nameof(query));
+
+            var queryInfo = _languageInfo.GetQuery(query.GetType());
+            if (!_authorization.IsAllowed(query.UserId, queryInfo, query.AggregateId)) throw new Exception("Unauthorized");
+
             var queryRunner = _queryRunnerFactory(query.GetType());
             return await queryRunner.Run(query);
         }
@@ -55,5 +58,7 @@ namespace Cleanic.Application
         private readonly IEventStore _eventStore;
         private readonly IProjectionStore _projectionStore;
         private readonly Func<Type, QueryRunner> _queryRunnerFactory;
+        private readonly Authorization _authorization;
+        private readonly LanguageInfo _languageInfo;
     }
 }

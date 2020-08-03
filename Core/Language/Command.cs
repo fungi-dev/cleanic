@@ -1,4 +1,4 @@
 ﻿namespace Cleanic.Core
 {
-    public class Command : Message { }
+    public class Command : Action { }
 }

@@ -42,6 +42,7 @@ namespace Cleanic.Framework
             services.AddSingleton(LanguageInfoType);
             services.AddSingleton(x => (LanguageInfo)x.GetRequiredService(LanguageInfoType));
             services.AddSingleton<IEventStore>(x => new MongoEventStore(AspNetAppConfig["MongoDb:ConnectionString"], x.GetRequiredService<ILogger<MongoEventStore>>(), (LanguageInfo)x.GetRequiredService(LanguageInfoType)));
+            services.AddScoped<Authorization>();
 
             // Write application
             services.AddSingleton(DomainInfoType);
@@ -51,7 +52,7 @@ namespace Cleanic.Framework
             services.AddSingleton<SagaAgent>();
             RegisterDomainServices(services);
             services.AddTransient<Func<Type, Service[]>>(sp => type => sp.GetServices<Service>().Where(s => type.IsAssignableFrom(s.GetType())).ToArray());
-            services.AddSingleton<WriteApplicationFacade>();
+            services.AddScoped<WriteApplicationFacade>();
 
             // Read application
             services.AddSingleton(ProjectionsInfoType);
@@ -60,7 +61,7 @@ namespace Cleanic.Framework
             services.AddSingleton<ProjectionsAgent>();
             RegisterQueryRunners(services);
             services.AddTransient<Func<Type, QueryRunner>>(sp => type => sp.GetServices<QueryRunner>().Single(qr => qr.Query.Type == type));
-            services.AddSingleton<ReadApplicationFacade>();
+            services.AddScoped<ReadApplicationFacade>();
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             services
@@ -81,11 +82,8 @@ namespace Cleanic.Framework
             ConfigureServicesPostAction(services);
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ProjectionsAgent _, CommandAgent __, SagaAgent ___, WriteApplicationFacade writeApp, ReadApplicationFacade readApp)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ProjectionsAgent _, CommandAgent __, SagaAgent ___)
         {
-            WriteApp = writeApp;
-            ReadApp = readApp;
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -118,13 +116,19 @@ namespace Cleanic.Framework
         protected virtual void ConfigureServicesPostAction(IServiceCollection services) { }
         protected virtual void AddCustomEndpoints(IEndpointRouteBuilder endpointRouteBuilder) { }
 
-        protected WriteApplicationFacade WriteApp;
-        protected ReadApplicationFacade ReadApp;
         protected readonly IConfiguration AspNetAppConfig;
         protected readonly JsonSerializerOptions SerializationOptions;
 
         private async Task ProcessCommandRequest(HttpContext context)
         {
+            var userId = context.User.Claims.Single(x => x.Type == "sub").Value;
+            var userGrantClaim = context.User.Claims.SingleOrDefault(x => x.Type == "grant");
+            if (userGrantClaim != null)
+            {
+                var auth = context.RequestServices.GetRequiredService<Authorization>();
+                auth.IncorporateGrantsFromOpenIdConnectClaims(userId, userGrantClaim.Value);
+            }
+
             var aggregateName = context.Request.RouteValues["aggregate"].ToString();
             var aggregateId = context.Request.RouteValues["aggregateId"].ToString();
             var commandName = context.Request.RouteValues["command"].ToString();
@@ -135,14 +139,22 @@ namespace Cleanic.Framework
             var command = (Command)Activator.CreateInstance(commandType);
             if (!String.IsNullOrWhiteSpace(requestBodyString)) command = (Command)JsonSerializer.Deserialize(requestBodyString, commandType, SerializationOptions);
             command.AggregateId = aggregateId;
+            command.UserId = userId;
 
-            await WriteApp.Do(command);
+            var writeApp = context.RequestServices.GetRequiredService<WriteApplicationFacade>();
+            await writeApp.Do(command);
             context.Response.StatusCode = StatusCodes.Status202Accepted;
         }
 
         private async Task ProcessQueryRequest(HttpContext context)
         {
-            var authorizedTenants = context.User.Claims.Where(x => x.Type == "tenant").Select(x => x.Value);
+            var userId = context.User.Claims.Single(x => x.Type == "sub").Value;
+            var userGrantClaim = context.User.Claims.SingleOrDefault(x => x.Type == "grant");
+            if (userGrantClaim != null)
+            {
+                var auth = context.RequestServices.GetRequiredService<Authorization>();
+                auth.IncorporateGrantsFromOpenIdConnectClaims(userId, userGrantClaim.Value);
+            }
 
             var aggregateName = context.Request.RouteValues["aggregate"].ToString();
             var aggregateId = context.Request.RouteValues["aggregateId"].ToString();
@@ -153,8 +165,10 @@ namespace Cleanic.Framework
             var queryParamsJson = JsonSerializer.Serialize(queryParams, SerializationOptions);
             var query = (Query)JsonSerializer.Deserialize(queryParamsJson, queryType, SerializationOptions);
             query.AggregateId = aggregateId;
+            query.UserId = userId;
 
-            var result = await ReadApp.Get(query, authorizedTenants);
+            var readApp = context.RequestServices.GetRequiredService<ReadApplicationFacade>();
+            var result = await readApp.Get(query);
             if (result != null)
             {
                 var responseBodyString = JsonSerializer.Serialize(result, result.GetType(), SerializationOptions);
@@ -170,7 +184,8 @@ namespace Cleanic.Framework
             var projections = (ProjectionsInfo)context.RequestServices.GetRequiredService(ProjectionsInfoType);
             var projectionInfo = projections.FindProjection(aggregateName, projectionName);
 
-            await ReadApp.RebuildProjections(projectionInfo);
+            var readApp = context.RequestServices.GetRequiredService<ReadApplicationFacade>();
+            await readApp.RebuildProjections(projectionInfo);
         }
     }
 }

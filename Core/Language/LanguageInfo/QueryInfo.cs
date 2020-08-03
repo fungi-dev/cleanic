@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Cleanic
 {
-    public class QueryInfo : AggregateItemInfo
+    public class QueryInfo : ActionInfo
     {
         public QueryInfo(Type queryType, AggregateInfo aggregate) : base(queryType, aggregate)
         {

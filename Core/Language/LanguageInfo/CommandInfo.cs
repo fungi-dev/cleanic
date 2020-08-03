@@ -2,7 +2,7 @@
 
 namespace Cleanic
 {
-    public class CommandInfo : AggregateItemInfo
+    public class CommandInfo : ActionInfo
     {
         public CommandInfo(Type commandType, AggregateInfo aggregate) : base(commandType, aggregate) { }
     }

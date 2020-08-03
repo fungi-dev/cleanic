@@ -3,18 +3,18 @@ using System.Collections.Generic;
 
 namespace Cleanic
 {
-    public class AggregateItemInfo : TermInfo, IEquatable<AggregateItemInfo>
+    public class MessageInfo : TermInfo, IEquatable<MessageInfo>
     {
         public AggregateInfo Aggregate { get; }
 
-        public AggregateItemInfo(Type aggregateItemTermType, AggregateInfo aggregate) : base(aggregateItemTermType)
+        public MessageInfo(Type messageType, AggregateInfo aggregate) : base(messageType)
         {
             Aggregate = aggregate ?? throw new ArgumentNullException(nameof(aggregate));
         }
 
-        public override Boolean Equals(Object obj) => Equals(obj as AggregateItemInfo);
+        public override Boolean Equals(Object obj) => Equals(obj as MessageInfo);
 
-        public Boolean Equals(AggregateItemInfo other)
+        public Boolean Equals(MessageInfo other)
         {
             return other != null && EqualityComparer<Type>.Default.Equals(Type, other.Type);
         }
@@ -25,5 +25,10 @@ namespace Cleanic
         }
 
         public override String ToString() => Type.Name;
+    }
+
+    public class ActionInfo : MessageInfo
+    {
+        public ActionInfo(Type actionType, AggregateInfo aggregate) : base(actionType, aggregate) { }
     }
 }

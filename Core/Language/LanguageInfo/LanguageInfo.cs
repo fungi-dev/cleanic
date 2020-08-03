@@ -45,7 +45,7 @@ namespace Cleanic
             return info?.Type ?? throw new Exception($"No event {eventFullName} in language");
         }
 
-        private Type FindTerm(IEnumerable<AggregateItemInfo> aggregateItems, String aggregateName, String aggregateItemName)
+        private Type FindTerm(IEnumerable<MessageInfo> aggregateItems, String aggregateName, String aggregateItemName)
         {
             var a = aggregateName.ToLowerInvariant();
             var i = aggregateItemName.ToLowerInvariant();
