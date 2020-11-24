@@ -2,6 +2,7 @@ using Cleanic.Application;
 using Cleanic.Core;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 
 namespace Cleanic.Utils
 {
@@ -15,6 +16,13 @@ namespace Cleanic.Utils
         }
 
         public static void DoNothing(this String _) { }
+
+        public static String ExternalLogic(this String stepName, System.Action logic)
+        {
+            logic.Invoke();
+
+            return stepName;
+        }
 
         public static String Do(this String stepName, Command command)
         {
