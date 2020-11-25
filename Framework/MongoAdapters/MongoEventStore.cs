@@ -104,6 +104,7 @@ namespace Cleanic.Framework
                 throw new Exception($"Can't save events for aggregate {aggregateInfo.Name} ({aggregateId}), it was already changed");
             }
 
+            var newDocuments = new List<BsonDocument>();
             foreach (var @event in events)
             {
                 expectedEventsCount++;
@@ -117,9 +118,10 @@ namespace Cleanic.Framework
                     { "eventMoment", @event.EventOccurred },
                     { "eventData", eventData }
                 };
-                await collection.InsertOneAsync(document);
-                await _bus.Publish(@event);
+                newDocuments.Add(document);
             }
+            await collection.InsertManyAsync(newDocuments);
+            foreach (var @event in events) await _bus.Publish(@event);
         }
 
         public void ListenEvents(EventInfo eventInfo, Func<Event, Task> listener)

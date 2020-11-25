@@ -97,8 +97,8 @@ namespace Cleanic.Framework
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_]+$)}/{command:alpha}", ProcessCommandRequest).RequireAuthorization();
-                endpoints.MapGet("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_]+$)}/{query:alpha}", ProcessQueryRequest).RequireAuthorization();
+                endpoints.MapPost("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_.]+$)}/{command:alpha}", ProcessCommandRequest).RequireAuthorization();
+                endpoints.MapGet("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_.]+$)}/{query:alpha}", ProcessQueryRequest).RequireAuthorization();
 
                 endpoints.MapPost("/service/init-data", ProcessInitDataRequest).RequireAuthorization(new AuthorizeAttribute { Roles = "admin" });
                 endpoints.MapPost("/service/rebuild-projections/{aggregate:alpha}/{projection:alpha}", ProcessRebuildProjectionsRequest).RequireAuthorization(new AuthorizeAttribute { Roles = "admin" });
