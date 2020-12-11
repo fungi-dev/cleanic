@@ -6,10 +6,9 @@ namespace Cleanic.Application
 {
     public class WriteApplicationFacade
     {
-        public WriteApplicationFacade(ICommandBus bus, Authorization authorization, LanguageInfo languageInfo)
+        public WriteApplicationFacade(ICommandBus bus, LanguageInfo languageInfo)
         {
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
-            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             LanguageInfo = languageInfo ?? throw new ArgumentNullException(nameof(languageInfo));
         }
 
@@ -17,8 +16,8 @@ namespace Cleanic.Application
         {
             if (command == null) throw new ArgumentNullException(nameof(command));
 
-            var commandInfo = LanguageInfo.GetCommand(command.GetType());
-            if (!_authorization.IsAllowed(command.UserId, commandInfo, command.AggregateId)) throw new Exception("Unauthorized");
+            //todo check if this user allowed to edit this aggregate
+            // let admins set permissions for particular aggregates (and maybe for particular aggregate actions)
 
             //todo serve multitanancy
             //todo inject tech info to command (envelope)
@@ -29,6 +28,5 @@ namespace Cleanic.Application
         protected readonly LanguageInfo LanguageInfo;
 
         private readonly ICommandBus _bus;
-        private readonly Authorization _authorization;
     }
 }

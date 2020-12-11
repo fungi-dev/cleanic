@@ -8,7 +8,7 @@ namespace Cleanic.Application
 {
     public abstract class QueryRunner
     {
-        public QueryRunner(IEventStore eventStore, IProjectionStore projectionStore, Type queryType, ProjectionsInfo projectionsInfo, LanguageInfo languageInfo, Authorization authorization)
+        public QueryRunner(IEventStore eventStore, IProjectionStore projectionStore, Type queryType, ProjectionsInfo projectionsInfo, LanguageInfo languageInfo)
         {
             EventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
             _projectionStore = projectionStore ?? throw new ArgumentNullException(nameof(projectionStore));
@@ -16,7 +16,6 @@ namespace Cleanic.Application
             ProjectionsInfo = projectionsInfo ?? throw new ArgumentNullException(nameof(projectionsInfo));
             LanguageInfo = languageInfo ?? throw new ArgumentNullException(nameof(languageInfo));
             Query = LanguageInfo.GetQuery(queryType);
-            Authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
         }
 
         public QueryInfo Query { get; }
@@ -35,7 +34,6 @@ namespace Cleanic.Application
         protected readonly IEventStore EventStore;
         protected readonly ProjectionsInfo ProjectionsInfo;
         protected readonly LanguageInfo LanguageInfo;
-        protected readonly Authorization Authorization;
 
         protected async Task<T> BuildProjection<T>(String id)
             where T : Projection, new()

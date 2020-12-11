@@ -1,7 +1,5 @@
 using Cleanic.Application;
 using Cleanic.Core;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -10,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Identity.Web;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
@@ -42,7 +40,6 @@ namespace Cleanic.Framework
             services.AddSingleton(LanguageInfoType);
             services.AddSingleton(x => (LanguageInfo)x.GetRequiredService(LanguageInfoType));
             services.AddSingleton<IEventStore>(x => new MongoEventStore(AspNetAppConfig["MongoDb:ConnectionString"], x.GetRequiredService<ILogger<MongoEventStore>>(), (LanguageInfo)x.GetRequiredService(LanguageInfoType)));
-            services.AddScoped<Authorization>();
 
             // Write application
             services.AddSingleton(DomainInfoType);
@@ -63,20 +60,12 @@ namespace Cleanic.Framework
             services.AddTransient<Func<Type, QueryRunner>>(sp => type => sp.GetServices<QueryRunner>().Single(qr => qr.Query.Type == type));
             services.AddScoped<ReadApplicationFacade>();
 
+            // By default, Microsoft has some legacy claim mapping that converts
+            // standard JWT claims into proprietary ones. This removes those mappings.
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = AspNetAppConfig["Locations:Identity"];
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateAudience = false,
-                        NameClaimType = "name",
-                        RoleClaimType = "role"
-                    };
-                });
-            services.AddAuthorization();
+            JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
+            services.AddMicrosoftIdentityWebApiAuthentication(AspNetAppConfig);
+            services.AddAuthorization(options => options.AddPolicy("servicesAreForAdminsOnly", policy => policy.RequireClaim(ClaimConstants.Roles, "admin")));
             services.AddCors();
 
             ConfigureServicesPostAction(services);
@@ -100,8 +89,8 @@ namespace Cleanic.Framework
                 endpoints.MapPost("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_.]+$)}/{command:alpha}", ProcessCommandRequest).RequireAuthorization();
                 endpoints.MapGet("/{aggregate:alpha}/{aggregateId:regex(^[a-zA-Z0-9-_.]+$)}/{query:alpha}", ProcessQueryRequest).RequireAuthorization();
 
-                endpoints.MapPost("/service/init-data", ProcessInitDataRequest).RequireAuthorization(new AuthorizeAttribute { Roles = "admin" });
-                endpoints.MapPost("/service/rebuild-projections/{aggregate:alpha}/{projection:alpha}", ProcessRebuildProjectionsRequest).RequireAuthorization(new AuthorizeAttribute { Roles = "admin" });
+                endpoints.MapPost("/service/init-data", ProcessInitDataRequest).RequireAuthorization("servicesAreForAdminsOnly");
+                endpoints.MapPost("/service/rebuild-projections/{aggregate:alpha}/{projection:alpha}", ProcessRebuildProjectionsRequest).RequireAuthorization("servicesAreForAdminsOnly");
 
                 AddCustomEndpoints(endpoints);
             });
@@ -121,14 +110,6 @@ namespace Cleanic.Framework
 
         private async Task ProcessCommandRequest(HttpContext context)
         {
-            var userId = context.User.Claims.Single(x => x.Type == "sub").Value;
-            var userGrantClaim = context.User.Claims.SingleOrDefault(x => x.Type == "grant");
-            if (userGrantClaim != null)
-            {
-                var auth = context.RequestServices.GetRequiredService<Authorization>();
-                auth.IncorporateGrantsFromOpenIdConnectClaims(userId, userGrantClaim.Value);
-            }
-
             var aggregateName = context.Request.RouteValues["aggregate"].ToString();
             var aggregateId = context.Request.RouteValues["aggregateId"].ToString();
             var commandName = context.Request.RouteValues["command"].ToString();
@@ -139,7 +120,6 @@ namespace Cleanic.Framework
             var command = (Command)Activator.CreateInstance(commandType);
             if (!String.IsNullOrWhiteSpace(requestBodyString)) command = (Command)JsonSerializer.Deserialize(requestBodyString, commandType, SerializationOptions);
             command.AggregateId = aggregateId;
-            command.UserId = userId;
 
             var writeApp = context.RequestServices.GetRequiredService<WriteApplicationFacade>();
             await writeApp.Do(command);
@@ -148,14 +128,6 @@ namespace Cleanic.Framework
 
         private async Task ProcessQueryRequest(HttpContext context)
         {
-            var userId = context.User.Claims.Single(x => x.Type == "sub").Value;
-            var userGrantClaim = context.User.Claims.SingleOrDefault(x => x.Type == "grant");
-            if (userGrantClaim != null)
-            {
-                var auth = context.RequestServices.GetRequiredService<Authorization>();
-                auth.IncorporateGrantsFromOpenIdConnectClaims(userId, userGrantClaim.Value);
-            }
-
             var aggregateName = context.Request.RouteValues["aggregate"].ToString();
             var aggregateId = context.Request.RouteValues["aggregateId"].ToString();
             var queryName = context.Request.RouteValues["query"].ToString();
@@ -165,7 +137,6 @@ namespace Cleanic.Framework
             var queryParamsJson = JsonSerializer.Serialize(queryParams, SerializationOptions);
             var query = (Query)JsonSerializer.Deserialize(queryParamsJson, queryType, SerializationOptions);
             query.AggregateId = aggregateId;
-            query.UserId = userId;
 
             var readApp = context.RequestServices.GetRequiredService<ReadApplicationFacade>();
             var result = await readApp.Get(query);

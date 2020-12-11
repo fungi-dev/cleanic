@@ -8,12 +8,11 @@ namespace Cleanic.Application
 {
     public class ReadApplicationFacade
     {
-        public ReadApplicationFacade(IEventStore eventStore, IProjectionStore projectionStore, Func<Type, QueryRunner> queryRunnerFactory, Authorization authorization, LanguageInfo languageInfo)
+        public ReadApplicationFacade(IEventStore eventStore, IProjectionStore projectionStore, Func<Type, QueryRunner> queryRunnerFactory, LanguageInfo languageInfo)
         {
             _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
             _projectionStore = projectionStore ?? throw new ArgumentNullException(nameof(projectionStore));
             _queryRunnerFactory = queryRunnerFactory ?? throw new ArgumentNullException(nameof(queryRunnerFactory));
-            _authorization = authorization ?? throw new ArgumentNullException(nameof(authorization));
             _languageInfo = languageInfo ?? throw new ArgumentNullException(nameof(languageInfo));
         }
 
@@ -28,7 +27,8 @@ namespace Cleanic.Application
             if (query == null) throw new ArgumentNullException(nameof(query));
 
             var queryInfo = _languageInfo.GetQuery(query.GetType());
-            if (!_authorization.IsAllowed(query.UserId, queryInfo, query.AggregateId)) throw new Exception("Unauthorized");
+            //todo check if this user allowed to read this aggregate
+            // let admins set permissions for particular aggregates (and maybe for particular aggregate actions)
 
             var queryRunner = _queryRunnerFactory(query.GetType());
             return await queryRunner.Run(query);
@@ -58,7 +58,6 @@ namespace Cleanic.Application
         private readonly IEventStore _eventStore;
         private readonly IProjectionStore _projectionStore;
         private readonly Func<Type, QueryRunner> _queryRunnerFactory;
-        private readonly Authorization _authorization;
         private readonly LanguageInfo _languageInfo;
     }
 }
