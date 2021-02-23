@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Cleanic.Application</RootNamespace>
+    <AssemblyName>Cleanic.Application.ApplicationBase.PortsSpecification</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\application\application-base\ApplicationBase.csproj" />
+  </ItemGroup>
+
+</Project>
