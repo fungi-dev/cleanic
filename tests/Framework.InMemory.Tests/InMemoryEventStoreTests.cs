@@ -25,7 +25,7 @@ namespace Cleanic.Framework.Tests
 
         public override void ConnectEventStore()
         {
-            EventStore = new InMemoryEventStore(DomainSchema, NullLogger<InMemoryEventStore>.Instance);
+            EventStore = new InMemoryEventStore(LogicSchema, NullLogger<InMemoryEventStore>.Instance);
         }
 
         public override void DisconnectEventStore()

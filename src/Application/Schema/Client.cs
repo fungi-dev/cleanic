@@ -22,7 +22,7 @@
             Login(userName, password);
         }
 
-        public CommandResult Command(Command command) => throw new NotImplementedException();
+        public void Command(Command command) => throw new NotImplementedException();
 
         public void Query(Query query) => throw new NotImplementedException();
 

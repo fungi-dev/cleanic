@@ -29,18 +29,14 @@
             Should.Throw<ArgumentNullException>(() => schema.GetAggregate(null));
             Should.Throw<ArgumentNullException>(() => schema.GetCommand(null));
             Should.Throw<ArgumentNullException>(() => schema.GetQuery(null));
-            Should.Throw<ArgumentNullException>(() => schema.GetDomainEvent(null));
 
             var anyTermType = typeof(Object); // no matter what it is because language is empty
             Should.Throw<ArgumentOutOfRangeException>(() => schema.GetAggregate(anyTermType));
             Should.Throw<ArgumentOutOfRangeException>(() => schema.GetCommand(anyTermType));
             Should.Throw<ArgumentOutOfRangeException>(() => schema.GetQuery(anyTermType));
-            Should.Throw<ArgumentOutOfRangeException>(() => schema.GetDomainEvent(anyTermType));
 
             var anyTermName = "sdfsdf"; // no matter what it is because language is empty
             Should.Throw<LanguageSchemaException>(() => schema.FindCommand(anyTermName, anyTermName));
-            Should.Throw<LanguageSchemaException>(() => schema.FindDomainEvent(anyTermName, anyTermName));
-            Should.Throw<LanguageSchemaException>(() => schema.FindDomainEvent(anyTermName));
         }
 
         /// <summary>
@@ -67,9 +63,6 @@
             cmdInfo.Type.ShouldBe(typeof(DemoAgg.Cmd));
             cmdInfo.Name.ShouldBe(nameof(DemoAgg.Cmd));
             cmdInfo.Aggregate.ShouldBe(aggInfo);
-
-            aggInfo.DomainEvents.ShouldNotBeNull();
-            aggInfo.DomainEvents.ShouldBeEmpty();
 
             aggInfo.Views.ShouldNotBeNull();
             aggInfo.Views.Count.ShouldBe(1);

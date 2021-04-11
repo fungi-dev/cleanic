@@ -6,7 +6,7 @@
 
     #region Language
 
-    public class DemoAgg : Aggregate
+    public class DemoAgg : IAggregate
     {
         public class Cmd : Command { }
 
@@ -18,7 +18,7 @@
 
     #endregion
 
-    #region Domain
+    #region Logic
 
     public class DemoAggLogic : AggregateLogic<DemoAgg>
     {

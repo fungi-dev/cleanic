@@ -11,7 +11,7 @@
         protected EventStoreRequirements()
         {
             var languageSchema = new LanguageSchemaBuilder().Add<Agg>().Build();
-            DomainSchema = new DomainSchemaBuilder(languageSchema).Add<AggLogic>().Build();
+            LogicSchema = new LogicSchemaBuilder(languageSchema).Add<AggLogic>().Build();
             ConnectEventStore();
         }
 
@@ -25,7 +25,7 @@
 
             await EventStore.SaveEvents(id, 0, events);
 
-            await AssertEventStoreHasOneEvent(DomainSchema.Language.GetAggregate(typeof(Agg)));
+            await AssertEventStoreHasOneEvent(LogicSchema.Language.GetAggregate(typeof(Agg)));
         }
 
         /// <summary>
@@ -53,7 +53,7 @@
 
             await EventStore.SaveEvents(id, 0, savedEvents);
 
-            var loadedEvents = await EventStore.LoadEvents(DomainSchema.Language.GetAggregate(typeof(Agg)), id);
+            var loadedEvents = await EventStore.LoadEvents(LogicSchema.Language.GetAggregate(typeof(Agg)), id);
             loadedEvents.ShouldNotBeNull();
             loadedEvents.Length.ShouldBe(savedEvents.Length);
             loadedEvents.Single().ShouldBe(savedEvents.Single());
@@ -69,7 +69,7 @@
 
             await EventStore.SaveEvents(id, 0, savedEvents);
 
-            var loadedEvents = await EventStore.LoadEvents(new[] { DomainSchema.GetAggregateEvent(typeof(AggLogic.Evt)) });
+            var loadedEvents = await EventStore.LoadEvents(new[] { LogicSchema.GetAggregateEvent(typeof(AggLogic.Evt)) });
             loadedEvents.ShouldNotBeNull();
             loadedEvents.Length.ShouldBe(1);
             loadedEvents.Single().ShouldBe(savedEvents.Single());
@@ -84,10 +84,10 @@
         public abstract void DisconnectEventStore();
         public abstract Task AssertEventStoreHasOneEvent(AggregateInfo aggregateInfo);
 
-        public DomainSchema DomainSchema { get; }
+        public LogicSchema LogicSchema { get; }
         public IEventStore EventStore { get; protected set; }
 
-        public class Agg : Aggregate { }
+        public class Agg : IAggregate { }
 
         public class AggLogic : AggregateLogic<Agg>
         {

@@ -16,7 +16,7 @@
 
     public class MongoEventStore : IEventStore
     {
-        public MongoEventStore(String connectionString, DomainSchema domainSchema, ILogger<MongoEventStore> logger)
+        public MongoEventStore(String connectionString, LogicSchema logicSchema, ILogger<MongoEventStore> logger)
         {
             if (String.IsNullOrWhiteSpace(connectionString)) throw new ArgumentNullException(nameof(connectionString));
             var conventions = new ConventionPack
@@ -27,7 +27,7 @@
             _mongo = new MongoClient(connectionString);
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _domainSchema = domainSchema ?? throw new ArgumentNullException(nameof(domainSchema));
+            _logicSchema = logicSchema ?? throw new ArgumentNullException(nameof(logicSchema));
             _bus = new InMemoryEventBus(_logger);
             Db = _mongo.GetDatabase("events");
 
@@ -52,7 +52,7 @@
             foreach (var doc in documents)
             {
                 var eventTypeName = doc.GetValue("eventType").AsString;
-                var eventType = _domainSchema.FindAggregateEvent(eventTypeName);
+                var eventType = _logicSchema.FindAggregateEvent(eventTypeName);
                 var eventData = doc.GetValue("eventData").AsString;
                 events.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
             }
@@ -75,7 +75,7 @@
                     foreach (var doc in documents)
                     {
                         var eventTypeName = doc.GetValue("eventType").AsString;
-                        var eventType = _domainSchema.FindAggregateEvent(eventTypeName);
+                        var eventType = _logicSchema.FindAggregateEvent(eventTypeName);
                         var eventData = doc.GetValue("eventData").AsString;
                         events.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
                     }
@@ -91,7 +91,7 @@
             events = events?.ToArray();
             if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
-            var aggregateInfo = events.Select(x => _domainSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
+            var aggregateInfo = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
 
             var collection = Db.GetCollection<BsonDocument>(aggregateInfo.FullName);
             var filter = new BsonDocument("aggregateId", aggregateId);
@@ -108,7 +108,7 @@
             foreach (var @event in events)
             {
                 expectedEventsCount++;
-                var eventMeta = _domainSchema.GetAggregateEvent(@event.GetType());
+                var eventMeta = _logicSchema.GetAggregateEvent(@event.GetType());
                 var eventData = JsonSerializer.Serialize(@event, @event.GetType(), _serializationOptions);
                 var document = new BsonDocument
                 {
@@ -137,7 +137,7 @@
             _mongo.DropDatabase("events");
         }
 
-        private readonly DomainSchema _domainSchema;
+        private readonly LogicSchema _logicSchema;
         private readonly IMongoClient _mongo;
         private readonly ILogger<MongoEventStore> _logger;
         private readonly InMemoryEventBus _bus;

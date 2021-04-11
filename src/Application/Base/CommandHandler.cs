@@ -8,11 +8,11 @@
 
     public class CommandHandler
     {
-        public CommandHandler(DomainSchema domainSchema, IEventStore eventStore, ICommandBus commandBus, Func<Type, Service[]> serviceFactory, ILogger<CommandHandler> logger)
+        public CommandHandler(LogicSchema logicSchema, IEventStore eventStore, ICommandBus commandBus, Func<Type, Service[]> serviceFactory, ILogger<CommandHandler> logger)
         {
             _commandBus = commandBus ?? throw new ArgumentNullException(nameof(commandBus));
             _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
-            _domainSchema = domainSchema ?? throw new ArgumentNullException(nameof(domainSchema));
+            _logicSchema = logicSchema ?? throw new ArgumentNullException(nameof(logicSchema));
             _serviceFactory = serviceFactory ?? throw new ArgumentNullException(nameof(serviceFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -21,31 +21,31 @@
 
         private readonly ICommandBus _commandBus;
         private readonly IEventStore _eventStore;
-        private readonly DomainSchema _domainSchema;
+        private readonly LogicSchema _logicSchema;
         private readonly Func<Type, Service[]> _serviceFactory;
         private readonly ILogger _logger;
 
         private async Task HandleCommand(Command command)
         {
-            var commandInfo = _domainSchema.Language.GetCommand(command.GetType());
+            var commandInfo = _logicSchema.Language.GetCommand(command.GetType());
             var aggregateInfo = commandInfo.Aggregate;
             var aggregateLogic = await LoadOrCreate(command.AggregateId, aggregateInfo);
-            var aggregateLogicInfo = _domainSchema.GetAggregate(aggregateInfo);
+            var aggregateLogicInfo = _logicSchema.GetAggregate(aggregateInfo);
             if (!aggregateLogicInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();
             await aggregateLogic.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
             await Save(aggregateLogic);
         }
 
-        private async Task<AggregateLogic> LoadOrCreate(String id, AggregateInfo aggregateInfo)
+        private async Task<Aggregate> LoadOrCreate(String id, AggregateInfo aggregateInfo)
         {
-            var aggregateLogicInfo = _domainSchema.GetAggregate(aggregateInfo);
+            var aggregateLogicInfo = _logicSchema.GetAggregate(aggregateInfo);
             var persistedEvents = await _eventStore.LoadEvents(aggregateInfo, id);
-            var aggregateLogic = (AggregateLogic)Activator.CreateInstance(aggregateLogicInfo.Type, new[] { id });
+            var aggregateLogic = (Aggregate)Activator.CreateInstance(aggregateLogicInfo.Type, new[] { id });
             aggregateLogic.LoadFromHistory(persistedEvents);
             return aggregateLogic;
         }
 
-        private async Task Save(AggregateLogic aggregateLogic)
+        private async Task Save(Aggregate aggregateLogic)
         {
             if (aggregateLogic.ProducedEvents.Any())
             {

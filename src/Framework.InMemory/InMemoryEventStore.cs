@@ -10,9 +10,9 @@
 
     public class InMemoryEventStore : IEventStore
     {
-        public InMemoryEventStore(DomainSchema domainSchema, ILogger<InMemoryEventStore> logger)
+        public InMemoryEventStore(LogicSchema logicSchema, ILogger<InMemoryEventStore> logger)
         {
-            _domainSchema = domainSchema ?? throw new ArgumentNullException(nameof(domainSchema));
+            _logicSchema = logicSchema ?? throw new ArgumentNullException(nameof(logicSchema));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Db = new List<DataItem>();
             _bus = new InMemoryEventBus(logger);
@@ -44,7 +44,7 @@
             events = events?.ToArray();
             if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
-            var aggregateInfo = events.Select(x => _domainSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
+            var aggregateInfo = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
 
             var actualAggregateVersion = Db.Where(x => x.AggregateInfo == aggregateInfo && x.AggregateId == aggregateId).Count();
             if (actualAggregateVersion != expectedEventsCount) throw new Exception("Concurrent access to event store");
@@ -54,7 +54,7 @@
                 {
                     AggregateInfo = aggregateInfo,
                     AggregateId = aggregateId,
-                    EventInfo = _domainSchema.GetAggregateEvent(@event.GetType()),
+                    EventInfo = _logicSchema.GetAggregateEvent(@event.GetType()),
                     Event = @event
                 });
                 await _bus.Publish(@event);
@@ -69,7 +69,7 @@
             _bus.ListenEvents(eventInfo.Type, listener);
         }
 
-        private readonly DomainSchema _domainSchema;
+        private readonly LogicSchema _logicSchema;
         private readonly ILogger _logger;
         private readonly InMemoryEventBus _bus;
 

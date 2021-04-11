@@ -25,7 +25,7 @@ namespace Cleanic.Framework.Tests
 
         public override void ConnectEventStore()
         {
-            EventStore = new MongoEventStore("mongodb+srv://admin:ZOeEiJReeSp1V7nO@alfacontext-tests-hhe15.azure.mongodb.net/test?retryWrites=true&w=majority", DomainSchema, NullLogger<MongoEventStore>.Instance);
+            EventStore = new MongoEventStore("mongodb+srv://admin:ZOeEiJReeSp1V7nO@alfacontext-tests-hhe15.azure.mongodb.net/test?retryWrites=true&w=majority", LogicSchema, NullLogger<MongoEventStore>.Instance);
         }
 
         public override void DisconnectEventStore()

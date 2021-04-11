@@ -26,8 +26,8 @@
         public void EmptySchema()
         {
             var language = new LanguageSchemaBuilder().Build();
-            var domain = new DomainSchemaBuilder(language).Build();
-            var projection = new ProjectionSchemaBuilder(domain).Build();
+            var logic = new LogicSchemaBuilder(language).Build();
+            var projection = new ProjectionSchemaBuilder(logic).Build();
 
             projection.Projectors.ShouldNotBeNull();
             projection.Projectors.ShouldBeEmpty();
@@ -37,11 +37,11 @@
         public void SimpleSchema()
         {
             var language = new LanguageSchemaBuilder().Add<DemoAgg>().Build();
-            var domain = new DomainSchemaBuilder(language)
+            var logic = new LogicSchemaBuilder(language)
                 .Add<DemoAggLogic>()
                 .Add<DemoSvc>()
                 .Build();
-            var projection = new ProjectionSchemaBuilder(domain)
+            var projection = new ProjectionSchemaBuilder(logic)
                 .Add<DemoProjector>()
                 .Build();
 
