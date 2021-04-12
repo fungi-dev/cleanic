@@ -8,7 +8,7 @@
     {
         public IReadOnlyCollection<QueryInfo> Queries { get; internal set; }
 
-        public AggregateViewInfo(Type aggregateViewType, AggregateInfo aggregate) : base(aggregateViewType, aggregate)
+        public AggregateViewInfo(Type aggregateViewType) : base(aggregateViewType)
         {
             if (!aggregateViewType.GetTypeInfo().IsSubclassOf(typeof(AggregateView))) throw new ArgumentOutOfRangeException(nameof(aggregateViewType));
         }

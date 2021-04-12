@@ -90,7 +90,7 @@
 
             foreach (var aggregateLogicInfo in _aggregateLogicInfos)
             {
-                foreach (var command in aggregateLogicInfo.Aggregate.Commands)
+                foreach (var command in aggregateLogicInfo.AggregateFromLanguage.Commands)
                 {
                     var dependencies = _dependencies.Where(x => x.Key.Type == command.Type);
                     aggregateLogicInfo.Dependencies = dependencies.ToImmutableDictionary(x => x.Key, x => (IReadOnlyCollection<ServiceInfo>)x.Value.Select(t => _serviceInfos.Single(s => s.Type == t)).ToImmutableHashSet());
@@ -152,7 +152,7 @@
             }
 
             var eventTypes = aggregateLogicType.GetTypeInfo().DeclaredNestedTypes.Where(x => x.IsSubclassOf(typeof(AggregateEvent)));
-            aggregateLogicInfo.Events = eventTypes.Select(x => new AggregateEventInfo(x, aggregateLogicInfo)).ToImmutableHashSet();
+            aggregateLogicInfo.Events = eventTypes.Select(x => new AggregateEventInfo(x)).ToImmutableHashSet();
 
             return aggregateLogicInfo;
         }

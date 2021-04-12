@@ -21,7 +21,7 @@ namespace Cleanic.Framework.Tests
         public override Task LoadingById() => base.LoadingById();
 
         [Fact]
-        public override Task LoadingByEventMeta() => base.LoadingByEventMeta();
+        public override Task LoadingByEventInfo() => base.LoadingByEventInfo();
 
         public override void ConnectEventStore()
         {
@@ -35,7 +35,7 @@ namespace Cleanic.Framework.Tests
 
         public override async Task AssertEventStoreHasOneEvent(AggregateInfo aggregateInfo)
         {
-            var collectionName = aggregateInfo.FullName;
+            var collectionName = aggregateInfo.Id;
             using (var collections = await ((MongoEventStore)EventStore).Db.ListCollectionNamesAsync())
             {
                 await collections.MoveNextAsync();

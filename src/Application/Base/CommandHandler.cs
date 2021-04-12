@@ -28,7 +28,7 @@
         private async Task HandleCommand(Command command)
         {
             var commandInfo = _logicSchema.Language.GetCommand(command.GetType());
-            var aggregateInfo = commandInfo.Aggregate;
+            var aggregateInfo = _logicSchema.GetAggregate(commandInfo).AggregateFromLanguage;
             var aggregateLogic = await LoadOrCreate(command.AggregateId, aggregateInfo);
             var aggregateLogicInfo = _logicSchema.GetAggregate(aggregateInfo);
             if (!aggregateLogicInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();

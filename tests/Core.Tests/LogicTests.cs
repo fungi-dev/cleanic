@@ -33,7 +33,6 @@
             logic.Services.ShouldNotBeNull();
             logic.Services.ShouldBeEmpty();
 
-            Should.Throw<ArgumentNullException>(() => logic.GetAggregate(null));
             Should.Throw<ArgumentNullException>(() => logic.GetReactingSagas(null));
         }
 
@@ -60,13 +59,12 @@
             logic.GetAggregate(aggInfo).ShouldBe(aggLogicInfo);
             aggLogicInfo.Type.ShouldBe(typeof(DemoAggLogic));
             aggLogicInfo.Name.ShouldBe(nameof(DemoAgg));
-            aggLogicInfo.Aggregate.ShouldBe(aggInfo);
 
             aggLogicInfo.Events.ShouldNotBeNull();
             aggLogicInfo.Events.Count.ShouldBe(1);
             var aggEventInfo = aggLogicInfo.Events.Single();
             aggEventInfo.Type.ShouldBe(typeof(DemoAggLogic.AggEvent));
-            aggEventInfo.Name.ShouldBe("Cleanic.Core.Tests.DemoAggLogic.AggEvent");
+            aggEventInfo.Name.ShouldBe(nameof(DemoAggLogic.AggEvent));
 
             Should.NotThrow(() => logic.GetReactingSagas(aggEventInfo));
             var sagas = logic.GetReactingSagas(aggEventInfo);
@@ -74,15 +72,15 @@
             sagas.Length.ShouldBe(1);
             var saga = sagas.Single();
             logic.Sagas.Single().ShouldBe(saga);
-            saga.Name.ShouldBe("Cleanic.Core.Tests.DemoSaga");
             saga.Type.ShouldBe(typeof(DemoSaga));
+            saga.Name.ShouldBe(nameof(DemoSaga));
             saga.AggregateEvents.ShouldNotBeNull();
             saga.AggregateEvents.Count.ShouldBe(1);
             saga.AggregateEvents.Single().ShouldBe(aggEventInfo);
 
             var svc = logic.Services.Single();
-            svc.Name.ShouldBe("Cleanic.Core.Tests.DemoSvc");
             svc.Type.ShouldBe(typeof(DemoSvc));
+            svc.Name.ShouldBe(nameof(DemoSvc));
         }
     }
 }

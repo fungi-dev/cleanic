@@ -5,13 +5,9 @@
 
     public class QueryInfo : DomainObjectInfo
     {
-        public AggregateViewInfo AggregateView { get; }
-
-        public QueryInfo(Type queryType, AggregateViewInfo aggregateView) : base(queryType, aggregateView.Aggregate)
+        public QueryInfo(Type queryType) : base(queryType)
         {
             if (!queryType.GetTypeInfo().IsSubclassOf(typeof(Query))) throw new ArgumentOutOfRangeException(nameof(queryType));
-
-            AggregateView = aggregateView ?? throw new ArgumentNullException(nameof(aggregateView));
         }
     }
 }

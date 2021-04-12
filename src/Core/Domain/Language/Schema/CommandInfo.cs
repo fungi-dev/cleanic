@@ -5,7 +5,7 @@
 
     public class CommandInfo : DomainObjectInfo
     {
-        public CommandInfo(Type commandType, AggregateInfo aggregate) : base(commandType, aggregate)
+        public CommandInfo(Type commandType) : base(commandType)
         {
             if (!commandType.GetTypeInfo().IsSubclassOf(typeof(Command))) throw new ArgumentOutOfRangeException(nameof(commandType));
         }

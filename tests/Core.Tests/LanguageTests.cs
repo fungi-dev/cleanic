@@ -59,15 +59,14 @@
             aggInfo.Commands.Count.ShouldBe(1);
             var cmdInfo = aggInfo.Commands.Single();
             language.GetCommand(typeof(DemoAgg.Cmd)).ShouldBe(cmdInfo);
-            language.FindCommand("DemoAgg", "Cmd").ShouldBe(typeof(DemoAgg.Cmd));
+            language.FindCommand("DemoAgg", "Cmd").Type.ShouldBe(typeof(DemoAgg.Cmd));
             cmdInfo.Type.ShouldBe(typeof(DemoAgg.Cmd));
             cmdInfo.Name.ShouldBe(nameof(DemoAgg.Cmd));
-            cmdInfo.Aggregate.ShouldBe(aggInfo);
 
             aggInfo.Views.ShouldNotBeNull();
             aggInfo.Views.Count.ShouldBe(1);
             var viewInfo = aggInfo.Views.Single();
-            language.GetView(typeof(DemoAgg.View)).ShouldBe(viewInfo);
+            language.GetAggregateView(typeof(DemoAgg.View)).ShouldBe(viewInfo);
         }
     }
 }

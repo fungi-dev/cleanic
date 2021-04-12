@@ -17,8 +17,30 @@
         {
             if (aggregateInfo == null) throw new ArgumentNullException(nameof(aggregateInfo));
 
-            var info = Aggregates.SingleOrDefault(x => x.Aggregate == aggregateInfo);
-            return info ?? throw new LogicSchemaException($"No aggregate for '{aggregateInfo.Name}' in logic schema");
+            var aggregate = Aggregates.SingleOrDefault(x => x.AggregateFromLanguage == aggregateInfo);
+            if (aggregate == null) throw new LogicSchemaException($"No aggregate '{aggregateInfo.Name}' found in domain logic");
+
+            return aggregate;
+        }
+
+        public AggregateLogicInfo GetAggregate(CommandInfo commandInfo)
+        {
+            if (commandInfo == null) throw new ArgumentNullException(nameof(commandInfo));
+
+            var aggregate = Aggregates.SingleOrDefault(x => x.AggregateFromLanguage.Commands.Contains(commandInfo));
+            if (aggregate == null) throw new LogicSchemaException($"No aggregate with command '{commandInfo.Name}' found in domain logic");
+
+            return aggregate;
+        }
+
+        public AggregateLogicInfo GetAggregate(AggregateEventInfo aggregateEventInfo)
+        {
+            if (aggregateEventInfo == null) throw new ArgumentNullException(nameof(aggregateEventInfo));
+
+            var aggregate = Aggregates.SingleOrDefault(x => x.Events.Contains(aggregateEventInfo));
+            if (aggregate == null) throw new LogicSchemaException($"No aggregate with event '{aggregateEventInfo.Name}' found in domain logic");
+
+            return aggregate;
         }
 
         public AggregateEventInfo GetAggregateEvent(Type aggregateEventType)
@@ -37,13 +59,15 @@
             return Sagas.Where(x => x.AggregateEvents.Contains(aggregateEventInfo)).ToArray();
         }
 
-        public Type FindAggregateEvent(String eventFullName)
+        public AggregateEventInfo FindAggregateEvent(String eventInfoId)
         {
-            if (String.IsNullOrEmpty(eventFullName)) throw new ArgumentNullException(nameof(eventFullName));
+            if (String.IsNullOrEmpty(eventInfoId)) throw new ArgumentNullException(nameof(eventInfoId));
 
-            var e = eventFullName.ToLowerInvariant();
-            var info = Aggregates.SelectMany(a => a.Events).SingleOrDefault(x => String.Equals(x.FullName, e, StringComparison.OrdinalIgnoreCase));
-            return info?.Type ?? throw new LanguageSchemaException($"No event '{eventFullName}' in logic schema");
+            var events = Aggregates.SelectMany(x => x.Events).Where(x => String.Equals(x.Id, eventInfoId, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (events.Length > 1) throw new LanguageSchemaException($"Many aggregate events with ID '{eventInfoId}' found in domain language");
+            if (events.Length == 0) throw new LanguageSchemaException($"No aggregate events with ID '{eventInfoId}' found in domain language");
+
+            return events.Single();
         }
     }
 }

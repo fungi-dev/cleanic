@@ -2,20 +2,25 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
 
     public class DomainObjectInfo : IEquatable<DomainObjectInfo>
     {
-        public Type Type { get; }
+        public String Id { get; }
         public String Name { get; protected set; }
-        public String FullName { get; }
-        public AggregateInfo Aggregate { get; }
+        public Type Type { get; }
 
-        public DomainObjectInfo(Type domainObjectType, AggregateInfo aggregateInfo)
+        public DomainObjectInfo(Type domainObjectType)
         {
-            Type = domainObjectType ?? throw new ArgumentNullException(nameof(domainObjectType));
+            if (domainObjectType == null) throw new ArgumentNullException(nameof(domainObjectType));
+
+            var guidAttr = domainObjectType.CustomAttributes.SingleOrDefault(x => x.AttributeType == typeof(GuidAttribute));
+            if (guidAttr == null) throw new ArgumentException($"Domain object '{domainObjectType.Name}' isn't marked with GuidAttribute", nameof(domainObjectType));
+            Id = domainObjectType.GUID.ToString();
+
+            Type = domainObjectType;
             Name = domainObjectType.Name;
-            FullName = domainObjectType.FullName.Replace("+", ".");
-            Aggregate = aggregateInfo;
         }
 
         public override Boolean Equals(Object obj) => Equals(obj as DomainObjectInfo);

@@ -2,18 +2,20 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
 
     public class ProjectorInfo : DomainObjectInfo
     {
-        public String FullName { get; }
-        public AggregateViewInfo View { get; }
+        public AggregateViewInfo AggregateView { get; }
         public Boolean IsRoot { get; }
         public IReadOnlyCollection<AggregateEventInfo> Events { get; internal set; }
 
-        public ProjectorInfo(Type projectorType, AggregateInfo aggregateInfo) : base(projectorType, aggregateInfo)
+        public ProjectorInfo(Type projectorType, AggregateViewInfo aggregateViewInfo, Boolean isRoot) : base(projectorType)
         {
-            FullName = projectorType.FullName.Replace("+", ".");
-            IsRoot = aggregateInfo.IsRoot;
+            if (!projectorType.GetTypeInfo().IsSubclassOf(typeof(Projector))) throw new ArgumentOutOfRangeException(nameof(projectorType));
+            AggregateView = aggregateViewInfo ?? throw new ArgumentNullException(nameof(aggregateViewInfo));
+
+            IsRoot = isRoot;
         }
     }
 }

@@ -4,6 +4,7 @@
     using Shouldly;
     using System;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
 
     public abstract class EventStoreRequirements : IDisposable
@@ -62,7 +63,7 @@
         /// <summary>
         /// События загружаются из хранилища указанием их терминов.
         /// </summary>
-        public virtual async Task LoadingByEventMeta()
+        public virtual async Task LoadingByEventInfo()
         {
             var id = "1";
             var savedEvents = new[] { new AggLogic.Evt() };
@@ -87,12 +88,15 @@
         public LogicSchema LogicSchema { get; }
         public IEventStore EventStore { get; protected set; }
 
+        [Guid("64372D54-4A07-4902-9737-2AA574137139")]
         public class Agg : IAggregate { }
 
+        [Guid("64372D54-4A07-4902-9737-2AA574137139")]
         public class AggLogic : AggregateLogic<Agg>
         {
             public AggLogic(String id) : base(id) { }
 
+            [Guid("D9E79878-7A23-44D5-B925-157E7E5F001A")]
             public class Evt : AggregateEvent { }
         }
     }

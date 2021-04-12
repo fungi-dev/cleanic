@@ -36,7 +36,7 @@
             if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
             if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.FullName);
+            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
             var filter = new BsonDocument("AggregateId", aggregateId);
 
             var documents = await collection.Find(filter).ToListAsync();
@@ -49,8 +49,8 @@
         {
             if (aggregateView == null) throw new ArgumentNullException(nameof(aggregateView));
 
-            var aggregateViewInfo = _projectionSchema.Language.GetView(aggregateView.GetType());
-            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.FullName);
+            var aggregateViewInfo = _projectionSchema.Language.GetAggregateView(aggregateView.GetType());
+            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
             var filter = new BsonDocument("AggregateId", aggregateView.AggregateId);
 
             var documents = await collection.Find(filter).ToListAsync();

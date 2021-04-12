@@ -44,7 +44,9 @@
             events = events?.ToArray();
             if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
-            var aggregateInfo = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
+            var eventInfos = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()));
+            var aggregateLogicInfos = eventInfos.Select(x => _logicSchema.GetAggregate(x).AggregateFromLanguage);
+            var aggregateInfo = aggregateLogicInfos.Distinct().Single();
 
             var actualAggregateVersion = Db.Where(x => x.AggregateInfo == aggregateInfo && x.AggregateId == aggregateId).Count();
             if (actualAggregateVersion != expectedEventsCount) throw new Exception("Concurrent access to event store");

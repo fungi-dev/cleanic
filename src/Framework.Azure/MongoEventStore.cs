@@ -44,15 +44,15 @@
             if (aggregateInfo == null) throw new ArgumentNullException(nameof(aggregateInfo));
             if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.FullName);
+            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.Id);
             var filter = new BsonDocument("aggregateId", aggregateId);
             var documents = await collection.Find(filter).ToListAsync();
 
             var events = new List<AggregateEvent>();
             foreach (var doc in documents)
             {
-                var eventTypeName = doc.GetValue("eventType").AsString;
-                var eventType = _logicSchema.FindAggregateEvent(eventTypeName);
+                var eventInfoId = doc.GetValue("eventInfoId").AsString;
+                var eventType = _logicSchema.FindAggregateEvent(eventInfoId).Type;
                 var eventData = doc.GetValue("eventData").AsString;
                 events.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
             }
@@ -64,25 +64,20 @@
             eventInfos = eventInfos?.ToArray();
             if (eventInfos == null || !eventInfos.Any()) throw new ArgumentNullException(nameof(eventInfos));
 
-            var events = new List<AggregateEvent>();
-            foreach (var aggGroup in eventInfos.GroupBy(x => x.Aggregate.FullName))
+            var result = new List<AggregateEvent>();
+            foreach (var eventInfo in eventInfos)
             {
-                var collection = Db.GetCollection<BsonDocument>(aggGroup.Key);
-                foreach (var eventTypeGroup in aggGroup.GroupBy(x => x.FullName))
+                var collection = Db.GetCollection<BsonDocument>(_logicSchema.GetAggregate(eventInfo).Id);
+                var filter = new BsonDocument("eventInfoId", eventInfo.Id);
+                var documents = await collection.Find(filter).ToListAsync();
+                foreach (var doc in documents)
                 {
-                    var filter = new BsonDocument("eventType", eventTypeGroup.Key);
-                    var documents = await collection.Find(filter).ToListAsync();
-                    foreach (var doc in documents)
-                    {
-                        var eventTypeName = doc.GetValue("eventType").AsString;
-                        var eventType = _logicSchema.FindAggregateEvent(eventTypeName);
-                        var eventData = doc.GetValue("eventData").AsString;
-                        events.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
-                    }
+                    var eventData = doc.GetValue("eventData").AsString;
+                    result.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventInfo.Type, _serializationOptions));
                 }
             }
 
-            return events.OrderBy(x => x.EventOccurred).ToArray();
+            return result.OrderBy(x => x.EventOccurred).ToArray();
         }
 
         public async Task SaveEvents(String aggregateId, UInt32 expectedEventsCount, IEnumerable<AggregateEvent> events)
@@ -91,9 +86,11 @@
             events = events?.ToArray();
             if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
-            var aggregateInfo = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()).Aggregate).Distinct().Single();
+            var eventInfos = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()));
+            var aggregateLogicInfos = eventInfos.Select(x => _logicSchema.GetAggregate(x).AggregateFromLanguage);
+            var aggregateInfo = aggregateLogicInfos.Distinct().Single();
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.FullName);
+            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.Id);
             var filter = new BsonDocument("aggregateId", aggregateId);
             var documents = await collection.Find(filter).ToListAsync();
 
@@ -108,13 +105,13 @@
             foreach (var @event in events)
             {
                 expectedEventsCount++;
-                var eventMeta = _logicSchema.GetAggregateEvent(@event.GetType());
-                var eventData = JsonSerializer.Serialize(@event, @event.GetType(), _serializationOptions);
+                var eventInfo = _logicSchema.GetAggregateEvent(@event.GetType());
+                var eventData = JsonSerializer.Serialize(@event, eventInfo.Type, _serializationOptions);
                 var document = new BsonDocument
                 {
                     { "aggregateId", aggregateId },
                     { "aggregateVersion", expectedEventsCount },
-                    { "eventType", eventMeta.FullName },
+                    { "eventInfoId", eventInfo.Id },
                     { "eventMoment", @event.EventOccurred },
                     { "eventData", eventData }
                 };

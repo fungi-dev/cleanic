@@ -18,7 +18,8 @@
         public async Task<AggregateView> Get(Query query)
         {
             var queryInfo = _languageSchema.GetQuery(query.GetType());
-            return await _viewStore.Load(queryInfo.AggregateView, query.AggregateId);
+            var aggregateViewInfo = _languageSchema.GetAggregateView(queryInfo);
+            return await _viewStore.Load(aggregateViewInfo, query.AggregateId);
         }
 
         public async Task Do(Command command)

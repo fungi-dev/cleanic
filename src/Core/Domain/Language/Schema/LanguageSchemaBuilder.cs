@@ -24,14 +24,7 @@
 
         public LanguageSchemaBuilder Add<T>()
         {
-            var type = typeof(T);
-            if (!type.GetTypeInfo().IsSubclassOf(typeof(IAggregate)))
-            {
-                var m = $"Type '{type.FullName}' added in language schema as an aggregate but it doesn't implement IAggregate interface";
-                throw new LanguageSchemaException(m);
-            }
-            _aggregateInfos.Add(ProduceAggregateInfoFromType(type));
-
+            _aggregateInfos.Add(ProduceAggregateInfoFromType(typeof(T)));
             return this;
         }
 
@@ -51,32 +44,17 @@
             var nested = aggregateType.GetTypeInfo().DeclaredNestedTypes;
 
             var commandTypes = nested.Where(x => x.IsSubclassOf(typeof(Command)));
-            aggregateInfo.Commands = ProduceCommandInfosFromTypes(commandTypes, aggregateInfo).ToImmutableHashSet();
+            aggregateInfo.Commands = commandTypes.Select(x => new CommandInfo(x)).ToImmutableHashSet();
 
             var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(AggregateView)));
-            aggregateInfo.Views = ProduceViewInfosFromTypes(viewTypes, aggregateInfo).ToImmutableHashSet();
+            aggregateInfo.Views = viewTypes.Select(x => new AggregateViewInfo(x)).ToImmutableHashSet();
             foreach (var viewInfo in aggregateInfo.Views)
             {
                 var queryTypes = viewInfo.Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).GetTypeInfo().IsAssignableFrom(x));
-                viewInfo.Queries = ProduceQueryInfosFromTypes(queryTypes, viewInfo).ToImmutableHashSet();
+                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x)).ToImmutableHashSet();
             }
 
             return aggregateInfo;
-        }
-
-        private IEnumerable<CommandInfo> ProduceCommandInfosFromTypes(IEnumerable<Type> commandTypes, AggregateInfo aggregateInfo)
-        {
-            return commandTypes.Select(x => new CommandInfo(x, aggregateInfo));
-        }
-
-        private IEnumerable<AggregateViewInfo> ProduceViewInfosFromTypes(IEnumerable<Type> viewTypes, AggregateInfo aggregateInfo)
-        {
-            return viewTypes.Select(x => new AggregateViewInfo(x, aggregateInfo));
-        }
-
-        private IEnumerable<QueryInfo> ProduceQueryInfosFromTypes(IEnumerable<Type> queryTypes, AggregateViewInfo viewInfo)
-        {
-            return queryTypes.Select(x => new QueryInfo(x, viewInfo));
         }
     }
 }

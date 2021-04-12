@@ -12,10 +12,10 @@
         public AggregateInfo GetAggregate(Type aggregateType)
         {
             if (aggregateType == null) throw new ArgumentNullException(nameof(aggregateType));
-            if (!aggregateType.GetTypeInfo().IsSubclassOf(typeof(Aggregate))) throw new ArgumentOutOfRangeException(nameof(aggregateType));
+            if (!aggregateType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IAggregate))) throw new ArgumentOutOfRangeException(nameof(aggregateType));
 
             var info = Aggregates.SingleOrDefault(x => x.Type == aggregateType);
-            return info ?? throw new LanguageSchemaException($"No aggregate {aggregateType.FullName} in language");
+            return info ?? throw new LanguageSchemaException($"No aggregate '{aggregateType.FullName}' found in domain language");
         }
 
         public CommandInfo GetCommand(Type commandType)
@@ -24,7 +24,7 @@
             if (!commandType.GetTypeInfo().IsSubclassOf(typeof(Command))) throw new ArgumentOutOfRangeException(nameof(commandType));
 
             var info = Aggregates.SelectMany(x => x.Commands).SingleOrDefault(x => x.Type == commandType);
-            return info ?? throw new LanguageSchemaException($"No command {commandType.FullName} in language");
+            return info ?? throw new LanguageSchemaException($"No command '{commandType.FullName}' found in domain language");
         }
 
         public QueryInfo GetQuery(Type queryType)
@@ -33,47 +33,78 @@
             if (!queryType.GetTypeInfo().IsSubclassOf(typeof(Query))) throw new ArgumentOutOfRangeException(nameof(queryType));
 
             var info = Aggregates.SelectMany(x => x.Views).SelectMany(x => x.Queries).SingleOrDefault(x => x.Type == queryType);
-            return info ?? throw new LanguageSchemaException($"No query {queryType.FullName} in language");
+            return info ?? throw new LanguageSchemaException($"No query '{queryType.FullName}' found in domain language");
         }
 
-        public AggregateViewInfo GetView(Type viewType)
+        public AggregateViewInfo GetAggregateView(Type viewType)
         {
             if (viewType == null) throw new ArgumentNullException(nameof(viewType));
             if (!viewType.GetTypeInfo().IsSubclassOf(typeof(AggregateView))) throw new ArgumentOutOfRangeException(nameof(viewType));
 
             var info = Aggregates.SelectMany(x => x.Views).SingleOrDefault(x => x.Type == viewType);
-            return info ?? throw new LanguageSchemaException($"No aggregate view for query {viewType.FullName} in language");
+            return info ?? throw new LanguageSchemaException($"No aggregate view for query '{viewType.FullName}' found in domain language");
         }
 
-        public Type FindCommand(String aggregateName, String commandName) => FindTerm(Aggregates.SelectMany(a => a.Commands), aggregateName, commandName);
-
-        public Type FindQuery(String aggregateName, String viewName, String queryName)
+        public AggregateViewInfo GetAggregateView(QueryInfo queryInfo)
         {
-            var a = aggregateName.ToLowerInvariant();
-            var v = viewName.ToLowerInvariant();
-            var q = queryName.ToLowerInvariant();
+            if (queryInfo == null) throw new ArgumentNullException(nameof(queryInfo));
 
-            var aggs = Aggregates.Where(x => x.FullName.ToLowerInvariant().Contains(a)).ToArray();
-            if (aggs.Length > 1) throw new LanguageSchemaException($"Many aggregates found by name {aggregateName}");
-            if (aggs.Length == 0) throw new LanguageSchemaException($"No aggregate {aggregateName} in language");
-
-            var views = aggs.Single().Views.Where(x => x.FullName.ToLowerInvariant().Contains(v)).ToArray();
-            if (views.Length > 1) throw new LanguageSchemaException($"Many aggregate views found by name {viewName}");
-            if (views.Length == 0) throw new LanguageSchemaException($"No aggregate view {viewName} in language");
-
-            var queries = views.Single().Queries.Where(x => x.FullName.ToLowerInvariant().Contains(q)).ToArray();
-            if (queries.Length > 1) throw new LanguageSchemaException($"Many queries found by name {queryName}");
-            if (queries.Length == 0) throw new LanguageSchemaException($"No query {queryName} in language");
-
-            return queries.Single().Type;
+            var info = Aggregates.SelectMany(x => x.Views).SingleOrDefault(x => x.Queries.Contains(queryInfo));
+            return info ?? throw new LanguageSchemaException($"No aggregate view for query '{queryInfo.Name}' found in domain language");
         }
 
-        private Type FindTerm(IEnumerable<DomainObjectInfo> aggregateItems, String aggregateName, String aggregateItemName)
+        public AggregateInfo FindAggregate(String aggregateName)
         {
-            var a = aggregateName.ToLowerInvariant();
-            var i = aggregateItemName.ToLowerInvariant();
-            var aggregateItem = aggregateItems.SingleOrDefault(x => String.Equals(x.Aggregate.Name, a, StringComparison.OrdinalIgnoreCase) && String.Equals(x.Name, i, StringComparison.OrdinalIgnoreCase));
-            return aggregateItem?.Type ?? throw new LanguageSchemaException($"No {aggregateItemName} in {aggregateName} aggregate");
+            if (String.IsNullOrEmpty(aggregateName)) throw new ArgumentNullException(nameof(aggregateName));
+
+            var aggs = Aggregates.Where(x => String.Equals(x.Name, aggregateName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (aggs.Length > 1) throw new LanguageSchemaException($"Many aggregates named '{aggregateName}' found in domain language");
+            if (aggs.Length == 0) throw new LanguageSchemaException($"No aggregate '{aggregateName}' found in domain language");
+
+            return aggs.Single();
+        }
+
+        public CommandInfo FindCommand(String aggregateName, String commandName)
+        {
+            if (String.IsNullOrEmpty(aggregateName)) throw new ArgumentNullException(nameof(aggregateName));
+            if (String.IsNullOrEmpty(commandName)) throw new ArgumentNullException(nameof(commandName));
+
+            var agg = FindAggregate(aggregateName);
+
+            var commands = agg.Commands.Where(x => String.Equals(x.Name, commandName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (commands.Length > 1) throw new LanguageSchemaException($"Many commands named '{commandName}' found in domain language");
+            if (commands.Length == 0) throw new LanguageSchemaException($"No command '{commandName}' found in domain language");
+
+            return commands.Single();
+        }
+
+        public AggregateViewInfo FindAggregateView(String aggregateName, String viewName)
+        {
+            if (String.IsNullOrEmpty(aggregateName)) throw new ArgumentNullException(nameof(aggregateName));
+            if (String.IsNullOrEmpty(viewName)) throw new ArgumentNullException(nameof(viewName));
+
+            var agg = FindAggregate(aggregateName);
+
+            var views = agg.Views.Where(x => String.Equals(x.Name, viewName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (views.Length > 1) throw new LanguageSchemaException($"Many aggregate views named '{viewName}' found in domain language");
+            if (views.Length == 0) throw new LanguageSchemaException($"No aggregate view '{viewName}' found in domain language");
+
+            return views.Single();
+        }
+
+        public QueryInfo FindQuery(String aggregateName, String viewName, String queryName)
+        {
+            if (String.IsNullOrEmpty(aggregateName)) throw new ArgumentNullException(nameof(aggregateName));
+            if (String.IsNullOrEmpty(viewName)) throw new ArgumentNullException(nameof(viewName));
+            if (String.IsNullOrEmpty(queryName)) throw new ArgumentNullException(nameof(queryName));
+
+            var view = FindAggregateView(aggregateName, viewName);
+
+            var queries = view.Queries.Where(x => String.Equals(x.Name, queryName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (queries.Length > 1) throw new LanguageSchemaException($"Many queries named '{queryName}' found in domain language");
+            if (queries.Length == 0) throw new LanguageSchemaException($"No query '{queryName}' found in domain language");
+
+            return queries.Single();
         }
     }
 }

@@ -50,13 +50,12 @@
             var prjInfo = projection.Projectors.Single();
             prjInfo.Type.ShouldBe(typeof(DemoProjector));
             prjInfo.Name.ShouldBe(nameof(DemoProjector));
-            prjInfo.Aggregate.ShouldBe(language.GetAggregate(typeof(DemoAgg)));
 
             prjInfo.Events.ShouldNotBeNull();
             prjInfo.Events.Count.ShouldBe(1);
             var aggEventInfo = prjInfo.Events.Single();
             aggEventInfo.Type.ShouldBe(typeof(DemoAggLogic.AggEvent));
-            aggEventInfo.Name.ShouldBe("Cleanic.Core.Tests.DemoAggLogic.AggEvent");
+            aggEventInfo.Name.ShouldBe(nameof(DemoAggLogic.AggEvent));
         }
     }
 }

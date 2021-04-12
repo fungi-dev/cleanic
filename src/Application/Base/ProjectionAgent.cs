@@ -30,10 +30,10 @@
                 var projector = (Projector)Activator.CreateInstance(projectorInfo.Type);
 
                 var id = projector.GetId(@event);
-                var view = await _viewStore.Load(projectorInfo.View, id);
+                var view = await _viewStore.Load(projectorInfo.AggregateView, id);
                 if (view == null)
                 {
-                    view = (AggregateView)Activator.CreateInstance(projectorInfo.View.Type);
+                    view = (AggregateView)Activator.CreateInstance(projectorInfo.AggregateView.Type);
                     view.AggregateId = id;
                 }
 
@@ -43,7 +43,7 @@
                 }
                 catch (Exception _)
                 {
-                    view = (AggregateView)Activator.CreateInstance(projectorInfo.View.Type);
+                    view = (AggregateView)Activator.CreateInstance(projectorInfo.AggregateView.Type);
                     view.AggregateId = id;
                     var events = await _eventStore.LoadEvents(projectorInfo.Events);
                     foreach (var e in events)

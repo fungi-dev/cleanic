@@ -12,7 +12,7 @@
         // Сага может реагировать на доменные события из других поддоменов, чтобы сынтегрироваться с ними
         //todo public IReadOnlyCollection<DomainEventInfo> DomainEvents { get; internal set; }
 
-        public SagaInfo(Type sagaType) : base(sagaType, null)
+        public SagaInfo(Type sagaType) : base(sagaType)
         {
             if (!sagaType.GetTypeInfo().IsSubclassOf(typeof(Saga))) throw new ArgumentOutOfRangeException(nameof(sagaType));
         }
