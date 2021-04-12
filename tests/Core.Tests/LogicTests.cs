@@ -82,5 +82,26 @@
             svc.Type.ShouldBe(typeof(DemoSvc));
             svc.Name.ShouldBe(nameof(DemoSvc));
         }
+
+        /// <summary>
+        /// В схеме есть сага, которая реагирует на ивенты, генерируемые каким-то агрегатом, не объявленном в этой схеме.
+        /// Это может быть, если собирается отдельное приложение для запуска саг: в схеме только саги, без агрегатов.
+        /// А какое-то другое приложение собрано с агрегатами, но без саг. Оба подключены к одному ивент-стору.
+        /// </summary>
+        [Fact]
+        public void SagaTriggeredByOutsideAggregate()
+        {
+            var language = new LanguageSchemaBuilder().Add<DemoAgg>().Build();
+            var domain = new LogicSchemaBuilder(language).Add<DemoSaga>().Build();
+
+            domain.Aggregates.ShouldBeEmpty();
+            domain.Sagas.Count.ShouldBe(1);
+            domain.Services.ShouldBeEmpty();
+
+            var saga = domain.Sagas.Single();
+            saga.AggregateEvents.Count.ShouldBe(1);
+            var evnt = saga.AggregateEvents.Single();
+            evnt.Type.ShouldBe(typeof(DemoAggLogic.AggEvent));
+        }
     }
 }

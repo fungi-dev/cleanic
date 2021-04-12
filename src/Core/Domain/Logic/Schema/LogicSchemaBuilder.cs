@@ -79,13 +79,20 @@
 
             foreach (var sagaInfo in _sagaInfos)
             {
-                var events = sagaInfo.Type.GetTypeInfo().DeclaredMethods
+                var eventTypes = sagaInfo.Type.GetTypeInfo().DeclaredMethods
                     .SelectMany(m => m.GetParameters())
                     .Select(p => p.ParameterType)
                     .Where(t => t.GetTypeInfo().IsSubclassOf(typeof(AggregateEvent)))
-                    .Distinct()
-                    .Select(t => _aggregateLogicInfos.SelectMany(x => x.Events).Single(x => x.Type == t));
-                sagaInfo.AggregateEvents = events.ToImmutableHashSet();
+                    .Distinct();
+                var eventInfosFromAggregates = _aggregateLogicInfos.SelectMany(x => x.Events).ToArray();
+                var eventInfos = new List<AggregateEventInfo>();
+                foreach (var eventType in eventTypes)
+                {
+                    var eventInfo = eventInfosFromAggregates.SingleOrDefault(x => x.Type == eventType);
+                    if (eventInfo == null) eventInfo = new AggregateEventInfo(eventType);
+                    eventInfos.Add(eventInfo);
+                }
+                sagaInfo.AggregateEvents = eventInfos.ToImmutableHashSet();
             }
 
             foreach (var aggregateLogicInfo in _aggregateLogicInfos)
