@@ -7,19 +7,21 @@
 
     public class InMemoryServerFacade : IServerFacade
     {
-        public InMemoryServerFacade(LanguageSchema languageSchema, ICommandBus commandBus, IViewStore viewStore, ILogger<InMemoryServerFacade> logger)
+        public LanguageSchema Language { get; }
+
+        public InMemoryServerFacade(LanguageSchema languageSchema, ICommandBus commandBus, ViewRepository viewRepository, ILogger<InMemoryServerFacade> logger)
         {
-            _languageSchema = languageSchema ?? throw new ArgumentNullException(nameof(languageSchema));
+            Language = languageSchema ?? throw new ArgumentNullException(nameof(languageSchema));
             _commandBus = commandBus ?? throw new ArgumentNullException(nameof(commandBus));
-            _viewStore = viewStore ?? throw new ArgumentNullException(nameof(viewStore));
+            _viewRepository = viewRepository ?? throw new ArgumentNullException(nameof(viewRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<AggregateView> Get(Query query)
         {
-            var queryInfo = _languageSchema.GetQuery(query.GetType());
-            var aggregateViewInfo = _languageSchema.GetAggregateView(queryInfo);
-            return await _viewStore.Load(aggregateViewInfo, query.AggregateId);
+            var queryInfo = Language.GetQuery(query.GetType());
+            var aggregateViewInfo = Language.GetAggregateView(queryInfo);
+            return await _viewRepository.Load(aggregateViewInfo, query.AggregateId);
         }
 
         public async Task Do(Command command)
@@ -32,9 +34,8 @@
             throw new NotImplementedException();
         }
 
-        private readonly LanguageSchema _languageSchema;
         private readonly ICommandBus _commandBus;
-        private readonly IViewStore _viewStore;
+        private readonly ViewRepository _viewRepository;
         private readonly ILogger _logger;
     }
 }

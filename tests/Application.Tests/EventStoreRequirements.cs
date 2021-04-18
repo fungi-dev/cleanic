@@ -92,7 +92,7 @@
         public class Agg : IAggregate { }
 
         [Guid("64372D54-4A07-4902-9737-2AA574137139")]
-        public class AggLogic : AggregateLogic<Agg>
+        public class AggLogic : Aggregate<Agg>
         {
             public AggLogic(String id) : base(id) { }
 

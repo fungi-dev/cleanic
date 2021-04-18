@@ -35,7 +35,7 @@
 
         private List<AggregateInfo> _aggregateInfos = new List<AggregateInfo>();
 
-        private IEnumerable<Type> FindAggregateTypesInAssembly(Assembly languageAssembly) => languageAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Aggregate)));
+        private IEnumerable<Type> FindAggregateTypesInAssembly(Assembly languageAssembly) => languageAssembly.DefinedTypes.Where(x => x.ImplementedInterfaces.Contains(typeof(IAggregate)));
 
         private AggregateInfo ProduceAggregateInfoFromType(Type aggregateType)
         {
@@ -47,7 +47,7 @@
             aggregateInfo.Commands = commandTypes.Select(x => new CommandInfo(x)).ToImmutableHashSet();
 
             var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(AggregateView)));
-            aggregateInfo.Views = viewTypes.Select(x => new AggregateViewInfo(x)).ToImmutableHashSet();
+            aggregateInfo.Views = viewTypes.Select(x => new AggregateViewInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
             foreach (var viewInfo in aggregateInfo.Views)
             {
                 var queryTypes = viewInfo.Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).GetTypeInfo().IsAssignableFrom(x));

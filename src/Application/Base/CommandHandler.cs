@@ -34,6 +34,7 @@
             if (!aggregateLogicInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();
             await aggregateLogic.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
             await Save(aggregateLogic);
+            _logger.LogTrace("'{command}' handled", command);
         }
 
         private async Task<Aggregate> LoadOrCreate(String id, AggregateInfo aggregateInfo)

@@ -121,10 +121,10 @@
 
         private IEnumerable<(AggregateInfo, Type)> FindAggregateLogicTypesInAssembly(Assembly logicAssembly)
         {
-            var aggregateLogicTypes = logicAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(AggregateLogic<>)));
+            var aggregateLogicTypes = logicAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Aggregate)));
             foreach (var aggregateInfo in _languageSchema.Aggregates)
             {
-                var aggregateLogicTypesForOneAggregate = aggregateLogicTypes.Where(x => x.GenericTypeArguments.Single() == aggregateInfo.Type);
+                var aggregateLogicTypesForOneAggregate = aggregateLogicTypes.Where(x => x.BaseType.GenericTypeArguments.Single() == aggregateInfo.Type);
                 foreach (var aggregateLogicTypeForOneAggregate in aggregateLogicTypesForOneAggregate)
                 {
                     yield return (aggregateInfo, aggregateLogicTypeForOneAggregate);

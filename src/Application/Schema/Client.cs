@@ -1,33 +1,28 @@
 ﻿namespace Cleanic.Application
 {
     using Cleanic.Core;
-    using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     public class Client
     {
-        public ApplicationState State { get; }
-        public IReadOnlyCollection<CommandInfo> AvailableCommands => State.AvailableCommands;
-        public CommandInfo RequestedCommand => State.RequestedCommand;
-        public IReadOnlyCollection<QueryInfo> AvailableQueries => State.AvailableQueries;
-        public AggregateView Data => State.Data;
+        public ApplicationState State { get; protected set; }
+        public AggregateView View { get; protected set; }
+        public IReadOnlyCollection<CommandInfo> AvailableCommands { get; protected set; }
+        public CommandInfo RequestedCommand { get; protected set; }
+        public IReadOnlyCollection<QueryInfo> AvailableQueries { get; protected set; }
 
         public Client(IServerFacade serverFacade)
         {
-            _serverFacade = serverFacade;
+            ServerFacade = serverFacade;
         }
 
-        public Client(IServerFacade serverFacade, String userName, String password) : this(serverFacade)
-        {
-            Login(userName, password);
-        }
+        public virtual Task Init() => Task.CompletedTask;
 
-        public void Command(Command command) => throw new NotImplementedException();
+        public virtual Task Command(Command command) => ServerFacade.Do(command);
 
-        public void Query(Query query) => throw new NotImplementedException();
+        public virtual async Task Query(Query query) => View = await ServerFacade.Get(query);
 
-        public void Login(String userName, String password) => throw new NotImplementedException();
-
-        private readonly IServerFacade _serverFacade;
+        protected readonly IServerFacade ServerFacade;
     }
 }

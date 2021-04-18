@@ -64,7 +64,7 @@
             var projectorTypes = projectionAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Projector)));
             foreach (var agg in languageSchema.Aggregates)
             {
-                var aggProjectorTypes = projectorTypes.Where(x => x.GenericTypeArguments.Contains(agg.Type));
+                var aggProjectorTypes = projectorTypes.Where(x => x.BaseType.GenericTypeArguments.Contains(agg.Type));
                 foreach (var aggProjectorType in aggProjectorTypes)
                 {
                     yield return (agg, FindAggregateViewForProjector(aggProjectorType), aggProjectorType);

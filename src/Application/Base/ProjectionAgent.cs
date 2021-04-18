@@ -15,9 +15,13 @@
             _viewStore = viewStore ?? throw new ArgumentNullException(nameof(viewStore));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            foreach (var eventInfo in _projectionSchema.Projectors.SelectMany(p => p.Events))
+            foreach (var projectorInfo in _projectionSchema.Projectors)
             {
-                _eventStore.ListenEvents(eventInfo, e => ApplyEvent(e));
+                foreach (var eventInfo in projectorInfo.Events)
+                {
+                    _eventStore.ListenEvents(eventInfo, e => ApplyEvent(e));
+                    _logger.LogTrace("'{projector}' subscribed to '{event}'", projectorInfo, eventInfo);
+                }
             }
         }
 
@@ -29,7 +33,7 @@
 
                 var projector = (Projector)Activator.CreateInstance(projectorInfo.Type);
 
-                var id = projector.GetId(@event);
+                var id = projector.RunIdGetterMethod(@event);
                 var view = await _viewStore.Load(projectorInfo.AggregateView, id);
                 if (view == null)
                 {
@@ -48,7 +52,7 @@
                     var events = await _eventStore.LoadEvents(projectorInfo.Events);
                     foreach (var e in events)
                     {
-                        var idFromEvent = projector.GetId(e);
+                        var idFromEvent = projector.RunIdGetterMethod(e);
                         if (!idFromEvent.Equals(view.AggregateId)) continue;
                         projector.Apply(view, @event);
                     }
@@ -56,6 +60,7 @@
                 }
 
                 await _viewStore.Save(view);
+                _logger.LogTrace("'{projector}' updated '{view}' according to '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
             }
         }
 

@@ -26,7 +26,7 @@
     #region Logic
 
     [Guid("F50A723B-6874-49F9-AF68-6D571C4FA07B")]
-    public class DemoAggLogic : AggregateLogic<DemoAgg>
+    public class DemoAggLogic : Aggregate<DemoAgg>
     {
         public DemoAggLogic(String id) : base(id) { }
 

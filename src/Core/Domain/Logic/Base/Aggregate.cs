@@ -142,9 +142,9 @@
         private readonly List<AggregateEvent> _changes = new List<AggregateEvent>();
     }
 
-    public abstract class AggregateLogic<T> : Aggregate
+    public abstract class Aggregate<T> : Aggregate
         where T : IAggregate
     {
-        public AggregateLogic(String id) : base(id) { }
+        public Aggregate(String id) : base(id) { }
     }
 }

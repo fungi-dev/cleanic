@@ -13,13 +13,13 @@
             method.Invoke(this, new Object[] { view, @event });
         }
 
-        public String GetId(AggregateEvent @event)
+        public String RunIdGetterMethod(AggregateEvent @event)
         {
             var method = GetType().GetTypeInfo().DeclaredMethods
-                .Where(x => !x.IsStatic)
+                .Where(m => !m.IsStatic)
                 .Where(x => x.GetParameters().Length == 1)
                 .SingleOrDefault(x => x.GetParameters()[0].ParameterType.GetTypeInfo().IsAssignableFrom(@event.GetType()));
-            return (String)method?.Invoke(null, new[] { @event }) ?? @event.AggregateId;
+            return (String)method?.Invoke(this, new[] { @event }) ?? @event.AggregateId;
         }
 
         private MethodInfo GetApplyMethod(Type eventType)

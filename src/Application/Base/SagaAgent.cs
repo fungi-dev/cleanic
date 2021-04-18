@@ -3,7 +3,6 @@
     using Cleanic.Core;
     using Microsoft.Extensions.Logging;
     using System;
-    using System.Linq;
     using System.Threading.Tasks;
 
     public class SagaAgent
@@ -15,9 +14,13 @@
             _commandBus = commandBus ?? throw new ArgumentNullException(nameof(commandBus));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            foreach (var eventInfo in _logicSchema.Sagas.SelectMany(x => x.AggregateEvents))
+            foreach (var sagaInfo in _logicSchema.Sagas)
             {
-                _eventStore.ListenEvents(eventInfo, e => ReactToEvent(e));
+                foreach (var eventInfo in sagaInfo.AggregateEvents)
+                {
+                    _eventStore.ListenEvents(eventInfo, e => ReactToEvent(e));
+                    _logger.LogTrace("'{saga}' subscribed to '{event}'", sagaInfo, eventInfo);
+                }
             }
         }
 
@@ -33,7 +36,11 @@
             {
                 var saga = (Saga)Activator.CreateInstance(sagaInfo.Type);
                 var commands = await saga.Handle(@event);
-                foreach (var command in commands) await _commandBus.Send(command);
+                foreach (var command in commands)
+                {
+                    await _commandBus.Send(command);
+                    _logger.LogTrace("'{saga}' produced '{command}' in reaction to '{event}'", sagaInfo, command, eventInfo);
+                }
             }
         }
     }
