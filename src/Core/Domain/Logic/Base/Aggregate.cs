@@ -60,7 +60,7 @@
                 }
             }
 
-            //todo process nul result when return type is single event
+            //todo process null result when return type is single event
             var returnType = method.ReturnType;
             if (returnType.GetTypeInfo().IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
@@ -102,7 +102,7 @@
                 var t = method.ReturnType;
                 if (t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Task<>)) t = t.GenericTypeArguments[0];
                 if (t.IsArray) t = t.GetElementType();
-                if (t == typeof(AggregateError)) return method;
+                if (typeof(AggregateError).IsAssignableFrom(t)) return method;
             }
             return null;
         }
@@ -115,9 +115,9 @@
                 var t = method.ReturnType;
                 if (t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Task<>)) t = t.GenericTypeArguments[0];
                 if (t.IsArray) t = t.GetElementType();
-                if (t == typeof(AggregateEvent) && t != typeof(AggregateError)) return method;
+                if (typeof(AggregateEvent).IsAssignableFrom(t) && !typeof(AggregateError).IsAssignableFrom(t)) return method;
             }
-            throw new Exception($"'{GetType().Name}' don't know how to do a '{commandType.Name}'");
+            throw new Exception($"'{GetType().FullName}' don't know how to do a '{commandType.FullName}'");
         }
 
         private MethodInfo GetApplierOfConcreteEvent(Type eventType)

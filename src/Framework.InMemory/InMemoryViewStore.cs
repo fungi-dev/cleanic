@@ -16,6 +16,9 @@
 
         public Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, String aggregateId)
         {
+            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
+
             if (!_db.ContainsKey(aggregateViewInfo.Type)) return Task.FromResult<AggregateView>(null);
 
             return Task.FromResult(_db[aggregateViewInfo.Type].ContainsKey(aggregateId) ? _db[aggregateViewInfo.Type][aggregateId] : null);
@@ -23,6 +26,8 @@
 
         public Task Save(AggregateView aggregateView)
         {
+            if (aggregateView == null) throw new ArgumentNullException(nameof(aggregateView));
+
             if (!_db.TryGetValue(aggregateView.GetType(), out var entities))
             {
                 _db.Add(aggregateView.GetType(), entities = new Dictionary<String, AggregateView>());

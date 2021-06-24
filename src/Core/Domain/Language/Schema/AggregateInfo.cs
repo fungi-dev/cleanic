@@ -19,7 +19,19 @@
                 throw new LanguageSchemaException(m);
             }
 
-            IsRoot = aggregateType.GetTypeInfo().GetDeclaredField("RootId") != null;
+            if (aggregateType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IRootAggregate)))
+            {
+                var rootIdFields = aggregateType
+                    .GetTypeInfo()
+                    .GetRuntimeFields()
+                    .Where(x => x.IsStatic && x.IsPublic && x.FieldType == typeof(String));
+                if (!rootIdFields.Any())
+                {
+                    var er = $"Root aggregate ({Name}) doesn't contain any identifier fields";
+                    throw new LanguageSchemaException(er);
+                }
+                IsRoot = true;
+            }
         }
     }
 }

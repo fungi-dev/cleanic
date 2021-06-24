@@ -29,38 +29,27 @@
         {
             foreach (var projectorInfo in _projectionSchema.Projectors)
             {
-                if (!projectorInfo.Events.Any(i => i.Type == @event.GetType())) continue;
-
                 var projector = (Projector)Activator.CreateInstance(projectorInfo.Type);
 
-                var id = projector.RunIdGetterMethod(@event);
-                var view = await _viewStore.Load(projectorInfo.AggregateView, id);
-                if (view == null)
+                if (projectorInfo.CreateEvents.Any(e => e.Type == @event.GetType()))
                 {
-                    view = (AggregateView)Activator.CreateInstance(projectorInfo.AggregateView.Type);
-                    view.AggregateId = id;
+                    var view = projector.CreateView(@event);
+                    await _viewStore.Save(view);
+                    _logger.LogTrace("'{projector}' created '{view}' with '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
+                    continue;
                 }
 
-                try
+                if (projectorInfo.UpdateEvents.Any(e => e.Type == @event.GetType()))
                 {
-                    projector.Apply(view, @event);
-                }
-                catch (Exception _)
-                {
-                    view = (AggregateView)Activator.CreateInstance(projectorInfo.AggregateView.Type);
-                    view.AggregateId = id;
-                    var events = await _eventStore.LoadEvents(projectorInfo.Events);
-                    foreach (var e in events)
+                    var filter = projector.GetFilter(@event, projectorInfo.AggregateView);
+                    var views = await _viewStore.Load(projectorInfo.AggregateView, filter);
+                    foreach (var view in views)
                     {
-                        var idFromEvent = projector.RunIdGetterMethod(e);
-                        if (!idFromEvent.Equals(view.AggregateId)) continue;
-                        projector.Apply(view, @event);
+                        projector.UpdateView(view, @event);
+                        await _viewStore.Save(view);
+                        _logger.LogTrace("'{projector}' updated '{view}' with '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
                     }
-                    projector.Apply(view, @event);
                 }
-
-                await _viewStore.Save(view);
-                _logger.LogTrace("'{projector}' updated '{view}' according to '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
             }
         }
 

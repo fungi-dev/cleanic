@@ -9,6 +9,7 @@
     using MongoDB.Driver;
     using System;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Threading.Tasks;
 
     public class MongoProjectionStore : IViewStore
@@ -37,6 +38,22 @@
             if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
 
             var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
+            var filter = new BsonDocument("AggregateId", aggregateId);
+
+            var documents = await collection.Find(filter).ToListAsync();
+            var document = documents.SingleOrDefault();
+            if (document == null) return null;
+            return (AggregateView)BsonSerializer.Deserialize(document, aggregateViewInfo.Type);
+        }
+
+        public async Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
+        {
+            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
+
+            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
+            var filter = Builders<BsonDocument>.Filter.Eq(x => x.A, "1");
+            filter &= (Builders<User>.Filter.Eq(x => x.B, "4") | Builders<User>.Filter.Eq(x => x.B, "5"));
             var filter = new BsonDocument("AggregateId", aggregateId);
 
             var documents = await collection.Find(filter).ToListAsync();

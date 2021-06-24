@@ -17,6 +17,22 @@
             var info = Aggregates.SingleOrDefault(x => x.Type == aggregateType);
             return info ?? throw new LanguageSchemaException($"No aggregate '{aggregateType.FullName}' found in domain language");
         }
+        public AggregateInfo GetAggregate<T>() where T : IAggregate => GetAggregate(typeof(T));
+
+
+        public MessageInfo GetMessage(Type messageType)
+        {
+            if (messageType == null) throw new ArgumentNullException(nameof(messageType));
+            if (!messageType.GetTypeInfo().IsSubclassOf(typeof(Command)) && !messageType.GetTypeInfo().IsSubclassOf(typeof(Query)) && !messageType.GetTypeInfo().IsSubclassOf(typeof(AggregateView))) throw new ArgumentOutOfRangeException(nameof(messageType));
+
+            var commandInfo = Aggregates.SelectMany(x => x.Commands).SingleOrDefault(x => x.Type == messageType);
+            var queryInfo = Aggregates.SelectMany(x => x.Views).SelectMany(x => x.Queries).SingleOrDefault(x => x.Type == messageType);
+            var viewInfo = Aggregates.SelectMany(x => x.Views).SingleOrDefault(x => x.Type == messageType);
+            if (commandInfo == null && queryInfo == null && viewInfo == null) throw new LanguageSchemaException($"No message '{messageType.FullName}' found in domain language");
+
+            return commandInfo ?? (MessageInfo)queryInfo ?? viewInfo;
+        }
+        public MessageInfo GetMessage<T>() where T : Message => GetMessage(typeof(T));
 
         public CommandInfo GetCommand(Type commandType)
         {
@@ -26,6 +42,7 @@
             var info = Aggregates.SelectMany(x => x.Commands).SingleOrDefault(x => x.Type == commandType);
             return info ?? throw new LanguageSchemaException($"No command '{commandType.FullName}' found in domain language");
         }
+        public CommandInfo GetCommand<T>() where T : Command => GetCommand(typeof(T));
 
         public QueryInfo GetQuery(Type queryType)
         {
@@ -35,6 +52,7 @@
             var info = Aggregates.SelectMany(x => x.Views).SelectMany(x => x.Queries).SingleOrDefault(x => x.Type == queryType);
             return info ?? throw new LanguageSchemaException($"No query '{queryType.FullName}' found in domain language");
         }
+        public QueryInfo GetQuery<T>() where T : Query => GetQuery(typeof(T));
 
         public AggregateViewInfo GetAggregateView(Type viewType)
         {
@@ -44,6 +62,8 @@
             var info = Aggregates.SelectMany(x => x.Views).SingleOrDefault(x => x.Type == viewType);
             return info ?? throw new LanguageSchemaException($"No aggregate view for query '{viewType.FullName}' found in domain language");
         }
+        public AggregateViewInfo GetAggregateView<T>() where T : AggregateView => GetAggregateView(typeof(T));
+
 
         public AggregateViewInfo GetAggregateView(QueryInfo queryInfo)
         {

@@ -44,14 +44,14 @@
             var nested = aggregateType.GetTypeInfo().DeclaredNestedTypes;
 
             var commandTypes = nested.Where(x => x.IsSubclassOf(typeof(Command)));
-            aggregateInfo.Commands = commandTypes.Select(x => new CommandInfo(x)).ToImmutableHashSet();
+            aggregateInfo.Commands = commandTypes.Select(x => new CommandInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
 
             var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(AggregateView)));
             aggregateInfo.Views = viewTypes.Select(x => new AggregateViewInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
             foreach (var viewInfo in aggregateInfo.Views)
             {
                 var queryTypes = viewInfo.Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).GetTypeInfo().IsAssignableFrom(x));
-                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x)).ToImmutableHashSet();
+                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
             }
 
             return aggregateInfo;

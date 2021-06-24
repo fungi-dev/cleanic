@@ -3,10 +3,8 @@
     using System;
     using System.Collections.Generic;
 
-    public abstract class AggregateView : DomainObject
+    public abstract class AggregateView : Message
     {
-        public String AggregateId { get; set; }
-
         protected override IEnumerable<Object> GetIdentityComponents()
         {
             yield return AggregateId;

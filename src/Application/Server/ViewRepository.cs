@@ -3,6 +3,7 @@
     using Cleanic.Core;
     using Microsoft.Extensions.Logging;
     using System;
+    using System.Linq.Expressions;
     using System.Threading.Tasks;
 
     public class ViewRepository
@@ -15,13 +16,24 @@
 
         public async Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, String aggregateId)
         {
+            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
+
             var view = await _viewStore.Load(aggregateViewInfo, aggregateId);
-            if (aggregateViewInfo.IsRoot && view == null)
+            if (aggregateViewInfo.BelongsToRootAggregate && view == null)
             {
                 view = (AggregateView)Activator.CreateInstance(aggregateViewInfo.Type);
                 view.AggregateId = aggregateId;
             }
             return view;
+        }
+
+        public async Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView,Boolean>> selector)
+        {
+            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+            return await _viewStore.LoadOneByFilter(aggregateViewInfo, selector);
         }
 
         public Task Save(AggregateView aggregateView) => _viewStore.Save(aggregateView);

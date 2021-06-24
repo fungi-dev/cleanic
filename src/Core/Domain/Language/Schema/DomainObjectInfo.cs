@@ -5,13 +5,13 @@
     using System.Linq;
     using System.Runtime.InteropServices;
 
-    public class DomainObjectInfo : IEquatable<DomainObjectInfo>
+    public abstract class DomainObjectInfo : IEquatable<DomainObjectInfo>
     {
         public String Id { get; }
         public String Name { get; protected set; }
         public Type Type { get; }
 
-        public DomainObjectInfo(Type domainObjectType)
+        protected DomainObjectInfo(Type domainObjectType)
         {
             if (domainObjectType == null) throw new ArgumentNullException(nameof(domainObjectType));
 
