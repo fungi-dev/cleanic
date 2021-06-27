@@ -5,6 +5,8 @@
     using Microsoft.Extensions.Logging;
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Linq.Expressions;
     using System.Threading.Tasks;
 
     public class InMemoryViewStore : IViewStore
@@ -22,6 +24,16 @@
             if (!_db.ContainsKey(aggregateViewInfo.Type)) return Task.FromResult<AggregateView>(null);
 
             return Task.FromResult(_db[aggregateViewInfo.Type].ContainsKey(aggregateId) ? _db[aggregateViewInfo.Type][aggregateId] : null);
+        }
+
+        public Task<AggregateView[]> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
+        {
+            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
+
+            if (!_db.ContainsKey(aggregateViewInfo.Type)) return Task.FromResult(Array.Empty<AggregateView>());
+
+            return Task.FromResult(_db[aggregateViewInfo.Type].Values.Where(filterExpression.Compile()).ToArray());
         }
 
         public Task Save(AggregateView aggregateView)

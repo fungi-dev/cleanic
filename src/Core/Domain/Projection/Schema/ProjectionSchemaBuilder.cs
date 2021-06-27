@@ -78,7 +78,7 @@
                 .GetRuntimeMethods()
                 .SelectMany(m => m.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(AggregateView)))
+                .Where(p => p.IsSubclassOf(typeof(AggregateView)))
                 .Distinct()
                 .ToArray();
             if (aggregateViewTypes.Length == 0) throw new ProjectionSchemaException("Projector has no aggregate view update methods");
@@ -90,12 +90,23 @@
         {
             var projectorInfo = new ProjectorInfo(projectorType, aggregateViewInfo, aggregateInfo.IsRoot);
 
-            var eventTypes = projectorInfo.Type.GetTypeInfo().DeclaredMethods
+            var createEventTypes = projectorInfo.Type.GetTypeInfo().DeclaredMethods
+                .Where(m => m.ReturnType.IsSubclassOf(typeof(AggregateView)))
+                .Where(m => m.GetParameters().Length == 1)
                 .SelectMany(m => m.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(t => t.GetTypeInfo().IsSubclassOf(typeof(AggregateEvent)))
+                .Where(t => t.IsSubclassOf(typeof(AggregateEvent)))
                 .Distinct();
-            projectorInfo.Events = eventTypes.Select(t => _logicSchema.GetAggregateEvent(t)).ToImmutableHashSet();
+            projectorInfo.CreateEvents = createEventTypes.Select(t => _logicSchema.GetAggregateEvent(t)).ToImmutableHashSet();
+
+            var updateEventTypes = projectorInfo.Type.GetTypeInfo().DeclaredMethods
+                .Where(m => m.ReturnType == typeof(void))
+                .Where(m => m.GetParameters().Length == 2)
+                .SelectMany(m => m.GetParameters())
+                .Select(p => p.ParameterType)
+                .Where(t => t.IsSubclassOf(typeof(AggregateEvent)))
+                .Distinct();
+            projectorInfo.UpdateEvents = updateEventTypes.Select(t => _logicSchema.GetAggregateEvent(t)).ToImmutableHashSet();
 
             return projectorInfo;
         }

@@ -12,9 +12,9 @@
     using System.Linq.Expressions;
     using System.Threading.Tasks;
 
-    public class MongoProjectionStore : IViewStore
+    public class MongoViewStore : IViewStore
     {
-        public MongoProjectionStore(ProjectionSchema projectionSchema, String connectionString, ILogger<MongoProjectionStore> logger)
+        public MongoViewStore(ProjectionSchema projectionSchema, String connectionString, ILogger<MongoViewStore> logger)
         {
             if (String.IsNullOrWhiteSpace(connectionString)) throw new ArgumentNullException(nameof(connectionString));
 
@@ -46,20 +46,18 @@
             return (AggregateView)BsonSerializer.Deserialize(document, aggregateViewInfo.Type);
         }
 
-        public async Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
+        public async Task<AggregateView[]> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
         {
             if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
 
             var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
-            var filter = Builders<BsonDocument>.Filter.Eq(x => x.A, "1");
-            filter &= (Builders<User>.Filter.Eq(x => x.B, "4") | Builders<User>.Filter.Eq(x => x.B, "5"));
-            var filter = new BsonDocument("AggregateId", aggregateId);
-
+            //var filter = Builders<BsonDocument>.Filter.Eq(x => x.A, "1");
+            //filter &= (Builders<User>.Filter.Eq(x => x.B, "4") | Builders<User>.Filter.Eq(x => x.B, "5"));
+            var filter = new BsonDocument();
             var documents = await collection.Find(filter).ToListAsync();
-            var document = documents.SingleOrDefault();
-            if (document == null) return null;
-            return (AggregateView)BsonSerializer.Deserialize(document, aggregateViewInfo.Type);
+            var views = documents.Select(d => (AggregateView)BsonSerializer.Deserialize(d, aggregateViewInfo.Type));
+            return views.Where(filterExpression.Compile()).ToArray();
         }
 
         public async Task Save(AggregateView aggregateView)
@@ -83,6 +81,6 @@
 
         private readonly ProjectionSchema _projectionSchema;
         private readonly IMongoClient _mongo;
-        private readonly ILogger<MongoProjectionStore> _logger;
+        private readonly ILogger _logger;
     }
 }
