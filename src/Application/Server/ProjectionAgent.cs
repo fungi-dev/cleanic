@@ -17,7 +17,7 @@
 
             foreach (var projectorInfo in _projectionSchema.Projectors)
             {
-                foreach (var eventInfo in projectorInfo.Events)
+                foreach (var eventInfo in projectorInfo.CreateEvents.Concat(projectorInfo.UpdateEvents))
                 {
                     _eventStore.ListenEvents(eventInfo, e => ApplyEvent(e));
                     _logger.LogTrace("'{projector}' subscribed to '{event}'", projectorInfo, eventInfo);

@@ -26,9 +26,53 @@
 
         public async Task Do(Command command, IEnumerable<Service> dependencies)
         {
-            await HandleCommand<AggregateError>(command, dependencies);
-            if (_changes.Any()) return;
-            await HandleCommand<AggregateEvent>(command, dependencies);
+            var methods = GetType().GetTypeInfo().DeclaredMethods.Where(m => m.GetParameters().Any(p => p.ParameterType == command.GetType()));
+            if (methods.Count() != 1) throw new Exception($"'{GetType().FullName}' don't know how to do a '{command.GetType().FullName}'");
+            var method = methods.Single();
+
+            var @params = method.GetParameters();
+            var args = new List<Object>(@params.Length);
+            foreach (var paramType in @params.Select(p => p.ParameterType))
+            {
+                if (paramType == typeof(Command))
+                {
+                    args.Add(command);
+                    continue;
+                }
+
+                if (paramType.IsSubclassOf(typeof(Service)))
+                {
+                    var svcs = dependencies.Where(d => d.GetType().IsAssignableTo(paramType));
+                    if (!svcs.Any()) throw new LogicException($"Con't do '{command.GetType().FullName}' command, no '{paramType.FullName}' service");
+                    if (svcs.Count() > 1) throw new LogicException($"Con't do '{command.GetType().FullName}' command, multiple '{paramType.FullName}' services");
+
+                    args.Add(svcs.Single());
+                    continue;
+                }
+
+                if (paramType.IsGenericType && paramType.GenericTypeArguments.Length == 1)
+                {
+                    var svcs = dependencies.Where(d => d.GetType().IsAssignableTo(paramType.GenericTypeArguments[0]));
+                    args.Add(svcs);
+                    continue;
+                }
+
+                throw new LogicException($"Can't do '{command.GetType().FullName}' command, bad handler signature");
+            }
+
+            if (method.ReturnType == typeof(Task))
+            {
+                await (Task)method.Invoke(this, args.ToArray());
+                return;
+            }
+
+            if (method.ReturnType == typeof(void))
+            {
+                method.Invoke(this, args.ToArray());
+                return;
+            }
+
+            throw new LogicException($"Can't do '{command.GetType().FullName}' command, bad handler signature");
         }
 
         protected override IEnumerable<Object> GetIdentityComponents()
@@ -36,88 +80,9 @@
             yield return Id;
         }
 
-        private async Task HandleCommand<TResult>(Command command, IEnumerable<Service> dependencies)
-            where TResult : AggregateEvent
+        protected void Apply(AggregateEvent @event)
         {
-            var cmdType = command.GetType();
-
-            var method = typeof(TResult) == typeof(AggregateError) ? GetCheckMethod(cmdType) : GetDoMethod(cmdType);
-            if (method == null) return;
-
-            var @params = method.GetParameters();
-            var args = new List<Object> { command };
-            for (var i = 1; i < @params.Length; i++)
-            {
-                var t = @params[i].ParameterType;
-                if (!t.IsArray) args.Add(dependencies.Single(x => t.GetTypeInfo().IsAssignableFrom(x.GetType().GetTypeInfo())));
-                else
-                {
-                    t = t.GetElementType();
-                    var arr = dependencies.Where(x => t.GetTypeInfo().IsAssignableFrom(x.GetType().GetTypeInfo())).ToArray();
-                    var arg = Array.CreateInstance(t, arr.Length);
-                    arr.CopyTo(arg, 0);
-                    args.Add(arg);
-                }
-            }
-
-            //todo process null result when return type is single event
-            var returnType = method.ReturnType;
-            if (returnType.GetTypeInfo().IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
-            {
-                if (returnType.GenericTypeArguments[0].IsArray)
-                {
-                    foreach (var @event in await (Task<TResult[]>)method.Invoke(this, args.ToArray()))
-                    {
-                        Apply(@event, true);
-                    }
-                }
-                else
-                {
-                    var @event = await (Task<TResult>)method.Invoke(this, args.ToArray());
-                    if (@event != null) Apply(@event, true);
-                }
-            }
-            else
-            {
-                if (returnType.IsArray)
-                {
-                    foreach (var @event in (TResult[])method.Invoke(this, args.ToArray()))
-                    {
-                        Apply(@event, true);
-                    }
-                }
-                else
-                {
-                    var @event = (TResult)method.Invoke(this, args.ToArray());
-                    if (@event != null) Apply(@event, true);
-                }
-            }
-        }
-
-        private MethodInfo GetCheckMethod(Type commandType)
-        {
-            foreach (var method in GetType().GetTypeInfo().DeclaredMethods)
-            {
-                if (!method.GetParameters().Any(p => p.ParameterType == commandType)) continue;
-                var t = method.ReturnType;
-                if (t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Task<>)) t = t.GenericTypeArguments[0];
-                if (t.IsArray) t = t.GetElementType();
-                if (typeof(AggregateError).IsAssignableFrom(t)) return method;
-            }
-            return null;
-        }
-
-        private MethodInfo GetDoMethod(Type commandType)
-        {
-            foreach (var method in GetType().GetTypeInfo().DeclaredMethods)
-            {
-                if (!method.GetParameters().Any(p => p.ParameterType == commandType)) continue;
-                var t = method.ReturnType;
-                if (t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Task<>)) t = t.GenericTypeArguments[0];
-                if (t.IsArray) t = t.GetElementType();
-                if (typeof(AggregateEvent).IsAssignableFrom(t) && !typeof(AggregateError).IsAssignableFrom(t)) return method;
-            }
-            throw new Exception($"'{GetType().FullName}' don't know how to do a '{commandType.FullName}'");
+            Apply(@event, true);
         }
 
         private MethodInfo GetApplierOfConcreteEvent(Type eventType)
