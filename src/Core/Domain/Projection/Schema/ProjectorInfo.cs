@@ -2,21 +2,21 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Reflection;
+    using System.Collections.Immutable;
 
     public class ProjectorInfo : DomainObjectInfo
     {
-        public AggregateViewInfo AggregateView { get; }
-        public Boolean IsRoot { get; }
-        public IReadOnlyCollection<AggregateEventInfo> CreateEvents { get; internal set; }
-        public IReadOnlyCollection<AggregateEventInfo> UpdateEvents { get; internal set; }
+        public ViewInfo View { get; }
+        public IReadOnlyCollection<EventInfo> CreateEvents { get; internal set; }
+        public IReadOnlyCollection<EventInfo> UpdateEvents { get; internal set; }
 
-        public ProjectorInfo(Type projectorType, AggregateViewInfo aggregateViewInfo, Boolean isRoot) : base(projectorType)
+        public ProjectorInfo(Type projectorType, ViewInfo viewInfo) : base(projectorType)
         {
-            if (!projectorType.GetTypeInfo().IsSubclassOf(typeof(Projector))) throw new ArgumentOutOfRangeException(nameof(projectorType));
-            AggregateView = aggregateViewInfo ?? throw new ArgumentNullException(nameof(aggregateViewInfo));
+            EnsureTermTypeCorrect(projectorType, typeof(Projector));
+            View = viewInfo ?? throw new ArgumentNullException(nameof(viewInfo));
 
-            IsRoot = isRoot;
+            CreateEvents = Array.Empty<EventInfo>().ToImmutableHashSet();
+            UpdateEvents = Array.Empty<EventInfo>().ToImmutableHashSet();
         }
     }
 }

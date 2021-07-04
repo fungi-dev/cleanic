@@ -1,6 +1,7 @@
 ﻿namespace Cleanic.Core
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
@@ -9,17 +10,17 @@
 
     public abstract class Aggregate : DomainObject
     {
-        public String Id { get; }
+        public String EntityId { get; }
         public UInt32 Version { get; private set; }
 
-        public Aggregate(String id)
+        public Aggregate(String entityId)
         {
-            Id = id;
+            EntityId = entityId;
         }
 
-        public IReadOnlyCollection<AggregateEvent> ProducedEvents => _changes.ToImmutableList();
+        public IReadOnlyCollection<Event> ProducedEvents => _changes.ToImmutableList();
 
-        public void LoadFromHistory(ICollection<AggregateEvent> history)
+        public void LoadFromHistory(ICollection<Event> history)
         {
             foreach (var @event in history) Apply(@event, false);
         }
@@ -34,7 +35,7 @@
             var args = new List<Object>(@params.Length);
             foreach (var paramType in @params.Select(p => p.ParameterType))
             {
-                if (paramType == typeof(Command))
+                if (paramType.IsSubclassOf(typeof(Command)))
                 {
                     args.Add(command);
                     continue;
@@ -50,10 +51,20 @@
                     continue;
                 }
 
-                if (paramType.IsGenericType && paramType.GenericTypeArguments.Length == 1)
+                if (paramType.GetInterface(nameof(IEnumerable)) != null)
                 {
-                    var svcs = dependencies.Where(d => d.GetType().IsAssignableTo(paramType.GenericTypeArguments[0]));
-                    args.Add(svcs);
+                    var elemType = paramType.GetElementType();
+                    if (!paramType.IsArray)
+                    {
+                        if (paramType.GenericTypeArguments.Length != 1) throw new LogicException($"Can't do '{command.GetType().FullName}' command, bad handler signature");
+                        elemType = paramType.GetGenericArguments().Single();
+                    }
+
+                    var svcs = dependencies.Where(d => d.GetType().IsAssignableTo(elemType)).ToArray();
+                    var arg = Array.CreateInstance(elemType, svcs.Length);
+                    svcs.CopyTo(arg, 0);
+
+                    args.Add(arg);
                     continue;
                 }
 
@@ -77,10 +88,10 @@
 
         protected override IEnumerable<Object> GetIdentityComponents()
         {
-            yield return Id;
+            yield return EntityId;
         }
 
-        protected void Apply(AggregateEvent @event)
+        protected void Apply(Event @event)
         {
             Apply(@event, true);
         }
@@ -91,11 +102,11 @@
             return methods.SingleOrDefault(x => x.GetParameters()[0].ParameterType == eventType);
         }
 
-        private void Apply(AggregateEvent @event, Boolean isFresh)
+        private void Apply(Event @event, Boolean isFresh)
         {
             if (isFresh)
             {
-                @event.AggregateId = Id;
+                @event.EntityId = EntityId;
                 @event.EventOccurred = DateTime.UtcNow;
                 _changes.Add(@event);
             }
@@ -104,12 +115,12 @@
             Version++;
         }
 
-        private readonly List<AggregateEvent> _changes = new List<AggregateEvent>();
+        private readonly List<Event> _changes = new List<Event>();
     }
 
     public abstract class Aggregate<T> : Aggregate
-        where T : IAggregate
+        where T : Entity
     {
-        public Aggregate(String id) : base(id) { }
+        public Aggregate(String entityId) : base(entityId) { }
     }
 }

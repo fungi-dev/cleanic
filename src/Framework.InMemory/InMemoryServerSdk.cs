@@ -9,22 +9,22 @@
     {
         public LanguageSchema Language { get; }
 
-        public InMemoryServerSdk(LanguageSchema languageSchema, ICommandBus commandBus, ViewRepository viewRepository, ILogger<InMemoryServerSdk> logger)
+        public InMemoryServerSdk(LanguageSchema languageSchema, ICommandBus commandBus, IViewStore viewStore, ILogger<InMemoryServerSdk> logger)
         {
             Language = languageSchema ?? throw new ArgumentNullException(nameof(languageSchema));
             _commandBus = commandBus ?? throw new ArgumentNullException(nameof(commandBus));
-            _viewRepository = viewRepository ?? throw new ArgumentNullException(nameof(viewRepository));
+            _viewStore = viewStore ?? throw new ArgumentNullException(nameof(viewStore));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<AggregateView> Get(Query query, String accessToken)
+        public async Task<View> Get(Query query, String accessToken)
         {
             if (query == null) throw new ArgumentNullException(nameof(query));
             if (String.IsNullOrWhiteSpace(accessToken)) throw new ArgumentNullException(nameof(accessToken));
 
             var queryInfo = Language.GetQuery(query.GetType());
-            var aggregateViewInfo = Language.GetAggregateView(queryInfo);
-            return await _viewRepository.Load(aggregateViewInfo, query.AggregateId);
+            var viewInfo = Language.GetView(queryInfo);
+            return await _viewStore.Load(viewInfo, query.EntityId);
         }
 
         public async Task Do(Command command, String accessToken)
@@ -35,16 +35,16 @@
             await _commandBus.Send(command);
         }
 
-        public void ListenViewUpdates(AggregateViewInfo aggregateViewInfo, Func<AggregateView, Task> listener)
+        public void ListenViewUpdates(ViewInfo viewInfo, Func<View, Task> listener)
         {
-            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (viewInfo == null) throw new ArgumentNullException(nameof(viewInfo));
             if (listener == null) throw new ArgumentNullException(nameof(listener));
 
             throw new NotImplementedException();
         }
 
         private readonly ICommandBus _commandBus;
-        private readonly ViewRepository _viewRepository;
+        private readonly IViewStore _viewStore;
         private readonly ILogger _logger;
     }
 }

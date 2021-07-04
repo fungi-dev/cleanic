@@ -33,14 +33,14 @@
 
             if (type.IsSubclassOf(typeof(Projector)))
             {
-                var aggTypeArg = type.BaseType.GenericTypeArguments.Single();
-                var aggregateInfo = _logicSchema.Language.GetAggregate(aggTypeArg);
-                var aggregateViewInfo = FindAggregateViewForProjector(type);
-                _projectorInfos.Add(ProduceProjectorInfoFromType(aggregateInfo, aggregateViewInfo, type));
+                var entityTypeArg = type.BaseType.GenericTypeArguments.Single();
+                var entityInfo = _logicSchema.Language.GetEntity(entityTypeArg);
+                var viewInfo = FindViewForProjector(type);
+                _projectorInfos.Add(ProduceProjectorInfoFromType(entityInfo, viewInfo, type));
             }
             else
             {
-                var m = $"Type '{type.FullName}' added in projection schema as a projector but it isn't subclass of Projector";
+                var m = $"Type '{type.FullName}' added in projection schema as a projector but it isn't subclass of {nameof(Projector)}";
                 throw new ProjectionSchemaException(m);
             }
 
@@ -57,56 +57,56 @@
         }
 
         private readonly LogicSchema _logicSchema;
-        private readonly List<ProjectorInfo> _projectorInfos = new List<ProjectorInfo>();
+        private readonly List<ProjectorInfo> _projectorInfos = new();
 
-        private IEnumerable<(AggregateInfo, AggregateViewInfo, Type)> FindProjectorTypesInAssembly(Assembly projectionAssembly, LanguageSchema languageSchema)
+        private IEnumerable<(EntityInfo, ViewInfo, Type)> FindProjectorTypesInAssembly(Assembly projectionAssembly, LanguageSchema languageSchema)
         {
             var projectorTypes = projectionAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Projector)));
-            foreach (var agg in languageSchema.Aggregates)
+            foreach (var entity in languageSchema.Entities)
             {
-                var aggProjectorTypes = projectorTypes.Where(x => x.BaseType.GenericTypeArguments.Contains(agg.Type));
-                foreach (var aggProjectorType in aggProjectorTypes)
+                var entityProjectorTypes = projectorTypes.Where(x => x.BaseType.GenericTypeArguments.Contains(entity.Type));
+                foreach (var entityProjectorType in entityProjectorTypes)
                 {
-                    yield return (agg, FindAggregateViewForProjector(aggProjectorType), aggProjectorType);
+                    yield return (entity, FindViewForProjector(entityProjectorType), entityProjectorType);
                 }
             }
         }
 
-        private AggregateViewInfo FindAggregateViewForProjector(Type projectorType)
+        private ViewInfo FindViewForProjector(Type projectorType)
         {
-            var aggregateViewTypes = projectorType
+            var viewTypes = projectorType
                 .GetRuntimeMethods()
                 .SelectMany(m => m.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(p => p.IsSubclassOf(typeof(AggregateView)))
+                .Where(p => p.IsSubclassOf(typeof(View)))
                 .Distinct()
                 .ToArray();
-            if (aggregateViewTypes.Length == 0) throw new ProjectionSchemaException("Projector has no aggregate view update methods");
-            if (aggregateViewTypes.Length > 1) throw new ProjectionSchemaException("Projector has update methods for many aggregate views");
-            return _logicSchema.Language.GetAggregateView(aggregateViewTypes.Single());
+            if (viewTypes.Length == 0) throw new ProjectionSchemaException("Projector has no view update methods");
+            if (viewTypes.Length > 1) throw new ProjectionSchemaException("Projector has update methods for many views");
+            return _logicSchema.Language.GetView(viewTypes.Single());
         }
 
-        private ProjectorInfo ProduceProjectorInfoFromType(AggregateInfo aggregateInfo, AggregateViewInfo aggregateViewInfo, Type projectorType)
+        private ProjectorInfo ProduceProjectorInfoFromType(EntityInfo entityInfo, ViewInfo viewInfo, Type projectorType)
         {
-            var projectorInfo = new ProjectorInfo(projectorType, aggregateViewInfo, aggregateInfo.IsRoot);
+            var projectorInfo = new ProjectorInfo(projectorType, viewInfo);
 
             var createEventTypes = projectorInfo.Type.GetTypeInfo().DeclaredMethods
-                .Where(m => m.ReturnType.IsSubclassOf(typeof(AggregateView)))
+                .Where(m => m.ReturnType.IsSubclassOf(typeof(View)))
                 .Where(m => m.GetParameters().Length == 1)
                 .SelectMany(m => m.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(t => t.IsSubclassOf(typeof(AggregateEvent)))
+                .Where(t => t.IsSubclassOf(typeof(Event)))
                 .Distinct();
-            projectorInfo.CreateEvents = createEventTypes.Select(t => _logicSchema.GetAggregateEvent(t)).ToImmutableHashSet();
+            projectorInfo.CreateEvents = createEventTypes.Select(t => _logicSchema.GetEvent(t)).ToImmutableHashSet();
 
             var updateEventTypes = projectorInfo.Type.GetTypeInfo().DeclaredMethods
                 .Where(m => m.ReturnType == typeof(void))
                 .Where(m => m.GetParameters().Length == 2)
                 .SelectMany(m => m.GetParameters())
                 .Select(p => p.ParameterType)
-                .Where(t => t.IsSubclassOf(typeof(AggregateEvent)))
+                .Where(t => t.IsSubclassOf(typeof(Event)))
                 .Distinct();
-            projectorInfo.UpdateEvents = updateEventTypes.Select(t => _logicSchema.GetAggregateEvent(t)).ToImmutableHashSet();
+            projectorInfo.UpdateEvents = updateEventTypes.Select(t => _logicSchema.GetEvent(t)).ToImmutableHashSet();
 
             return projectorInfo;
         }

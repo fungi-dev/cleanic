@@ -1,4 +1,7 @@
 ﻿namespace Cleanic.Core
 {
-    public class Query : Message { }
+    /// <summary>
+    /// Represents an intent to know something about the domain.
+    /// </summary>
+    public abstract class Query : Message { }
 }

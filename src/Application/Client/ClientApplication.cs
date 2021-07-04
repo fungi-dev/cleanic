@@ -26,9 +26,9 @@
         public Message Output { get; protected set; }
         public Message Input { get; protected set; }
 
-        public async Task SelectItemInView(Expression<Func<AggregateView, Object>> viewItemPointer)
+        public async Task SelectItemInView(Expression<Func<View, Object>> viewItemPointer)
         {
-            var dataItem = viewItemPointer.Compile().Invoke(Output as AggregateView);
+            var dataItem = viewItemPointer.Compile().Invoke(Output as View);
             var query = BuildQueryFromViewItem(dataItem);
             await SendMessageToServer(query);
         }
@@ -37,7 +37,7 @@
         {
             if (!_contextMenuItems.Any(x => x.AssociatedMessage.Type == typeof(T))) throw new ArgumentOutOfRangeException(nameof(T));
 
-            Input = new T { AggregateId = Output.AggregateId };
+            Input = new T { EntityId = Output.EntityId };
             Output = null;
 
             await OnCommandIntent(Input as Command);

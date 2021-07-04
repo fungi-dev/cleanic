@@ -7,9 +7,9 @@
 
     public interface IEventStore
     {
-        Task<AggregateEvent[]> LoadEvents(AggregateInfo aggregateInfo, String aggregateId);
-        Task<AggregateEvent[]> LoadEvents(IEnumerable<AggregateEventInfo> eventInfos);
-        Task SaveEvents(String aggregateId, UInt32 expectedEventsCount, IEnumerable<AggregateEvent> events);
-        void ListenEvents(AggregateEventInfo eventInfo, Func<AggregateEvent, Task> listener);
+        Task<Event[]> LoadEvents(EntityInfo entityInfo, String entityId);
+        Task<Event[]> LoadEvents(IEnumerable<EventInfo> eventInfos);
+        Task SaveEvents(String entityId, UInt32 expectedEventsCount, IEnumerable<Event> events);
+        void ListenEvents(EventInfo eventInfo, Func<Event, Task> listener);
     }
 }

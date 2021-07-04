@@ -8,7 +8,7 @@
 
     public abstract class Saga : DomainObject
     {
-        public async Task<Command[]> Handle(AggregateEvent @event)
+        public async Task<Command[]> Handle(Event @event)
         {
             var methods = GetType().GetTypeInfo().DeclaredMethods
                 .Where(x => !x.IsStatic)

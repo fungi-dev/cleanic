@@ -28,30 +28,30 @@
         private async Task HandleCommand(Command command)
         {
             var commandInfo = _logicSchema.Language.GetCommand(command.GetType());
-            var aggregateInfo = _logicSchema.GetAggregate(commandInfo).AggregateFromLanguage;
-            var aggregateLogic = await LoadOrCreate(command.AggregateId, aggregateInfo);
-            var aggregateLogicInfo = _logicSchema.GetAggregate(aggregateInfo);
-            if (!aggregateLogicInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();
-            await aggregateLogic.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
-            await Save(aggregateLogic);
+            var entityInfo = _logicSchema.GetAggregate(commandInfo).Entity;
+            var aggregate = await LoadOrCreate(command.EntityId, entityInfo);
+            var aggregateInfo = _logicSchema.GetAggregate(entityInfo);
+            if (!aggregateInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();
+            await aggregate.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
+            await Save(aggregate);
             _logger.LogTrace("'{command}' handled", command);
         }
 
-        private async Task<Aggregate> LoadOrCreate(String id, AggregateInfo aggregateInfo)
+        private async Task<Aggregate> LoadOrCreate(String id, EntityInfo entityInfo)
         {
-            var aggregateLogicInfo = _logicSchema.GetAggregate(aggregateInfo);
-            var persistedEvents = await _eventStore.LoadEvents(aggregateInfo, id);
-            var aggregateLogic = (Aggregate)Activator.CreateInstance(aggregateLogicInfo.Type, new[] { id });
-            aggregateLogic.LoadFromHistory(persistedEvents);
-            return aggregateLogic;
+            var aggregateInfo = _logicSchema.GetAggregate(entityInfo);
+            var persistedEvents = await _eventStore.LoadEvents(entityInfo, id);
+            var aggregate = (Aggregate)Activator.CreateInstance(aggregateInfo.Type, new[] { id });
+            aggregate.LoadFromHistory(persistedEvents);
+            return aggregate;
         }
 
-        private async Task Save(Aggregate aggregateLogic)
+        private async Task Save(Aggregate aggregate)
         {
-            if (aggregateLogic.ProducedEvents.Any())
+            if (aggregate.ProducedEvents.Any())
             {
-                var persistedEventsCount = Convert.ToUInt32(aggregateLogic.Version - aggregateLogic.ProducedEvents.Count);
-                await _eventStore.SaveEvents(aggregateLogic.Id, persistedEventsCount, aggregateLogic.ProducedEvents);
+                var persistedEventsCount = Convert.ToUInt32(aggregate.Version - aggregate.ProducedEvents.Count);
+                await _eventStore.SaveEvents(aggregate.EntityId, persistedEventsCount, aggregate.ProducedEvents);
             }
         }
     }

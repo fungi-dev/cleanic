@@ -7,8 +7,8 @@
 
     public interface IViewStore
     {
-        Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, String aggregateId);
-        Task<AggregateView[]> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression);
-        Task Save(AggregateView aggregateView);
+        Task<View> Load(ViewInfo viewInfo, String entityId);
+        Task<View[]> Load(ViewInfo viewInfo, Expression<Func<View, Boolean>> filterExpression);
+        Task Save(View view);
     }
 }

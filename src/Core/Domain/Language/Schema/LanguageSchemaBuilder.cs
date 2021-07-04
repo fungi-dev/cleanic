@@ -16,45 +16,45 @@
     {
         public LanguageSchema BuildFromAssembly(Assembly assembly)
         {
-            var types = FindAggregateTypesInAssembly(assembly);
-            _aggregateInfos = types.Select(x => ProduceAggregateInfoFromType(x)).ToList();
+            var types = FindEntityTypesInAssembly(assembly);
+            _entityInfos = types.Select(x => ProduceEntityInfoFromType(x)).ToList();
 
             return Build();
         }
 
         public LanguageSchemaBuilder Add<T>()
         {
-            _aggregateInfos.Add(ProduceAggregateInfoFromType(typeof(T)));
+            _entityInfos.Add(ProduceEntityInfoFromType(typeof(T)));
             return this;
         }
 
         public LanguageSchema Build()
         {
-            return new LanguageSchema { Aggregates = _aggregateInfos.ToImmutableHashSet() };
+            return new LanguageSchema { Entities = _entityInfos.ToImmutableHashSet() };
         }
 
-        private List<AggregateInfo> _aggregateInfos = new List<AggregateInfo>();
+        private List<EntityInfo> _entityInfos = new();
 
-        private IEnumerable<Type> FindAggregateTypesInAssembly(Assembly languageAssembly) => languageAssembly.DefinedTypes.Where(x => x.ImplementedInterfaces.Contains(typeof(IAggregate)));
+        private IEnumerable<Type> FindEntityTypesInAssembly(Assembly languageAssembly) => languageAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Entity)));
 
-        private AggregateInfo ProduceAggregateInfoFromType(Type aggregateType)
+        private EntityInfo ProduceEntityInfoFromType(Type entityType)
         {
-            var aggregateInfo = new AggregateInfo(aggregateType);
+            var entityInfo = new EntityInfo(entityType);
 
-            var nested = aggregateType.GetTypeInfo().DeclaredNestedTypes;
+            var nested = entityType.GetTypeInfo().DeclaredNestedTypes;
 
             var commandTypes = nested.Where(x => x.IsSubclassOf(typeof(Command)));
-            aggregateInfo.Commands = commandTypes.Select(x => new CommandInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
+            entityInfo.Commands = commandTypes.Select(x => new CommandInfo(x)).ToImmutableHashSet();
 
-            var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(AggregateView)));
-            aggregateInfo.Views = viewTypes.Select(x => new AggregateViewInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
-            foreach (var viewInfo in aggregateInfo.Views)
+            var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(View)));
+            entityInfo.Views = viewTypes.Select(x => new ViewInfo(x)).ToImmutableHashSet();
+            foreach (var viewInfo in entityInfo.Views)
             {
                 var queryTypes = viewInfo.Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).GetTypeInfo().IsAssignableFrom(x));
-                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x, aggregateInfo.IsRoot)).ToImmutableHashSet();
+                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x)).ToImmutableHashSet();
             }
 
-            return aggregateInfo;
+            return entityInfo;
         }
     }
 }

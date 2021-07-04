@@ -12,16 +12,16 @@
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _busy = false;
-            _queue = new Queue<AggregateEvent>();
-            _eventSubscribers = new Dictionary<Type, List<Func<AggregateEvent, Task>>>();
+            _queue = new Queue<Event>();
+            _eventSubscribers = new Dictionary<Type, List<Func<Event, Task>>>();
         }
 
-        public async Task Publish(AggregateEvent @event)
+        public async Task Publish(Event @event)
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
 
             _queue.Enqueue(@event);
-            _logger.LogInformation("{event} published (agg: {aggId})", @event.GetType(), @event.AggregateId);
+            _logger.LogInformation("{event} published (agg: {aggId})", @event.GetType(), @event.EntityId);
             if (_busy) return;
 
             try
@@ -35,9 +35,9 @@
             }
         }
 
-        public void ListenEvents(Type eventType, Func<AggregateEvent, Task> listener)
+        public void ListenEvents(Type eventType, Func<Event, Task> listener)
         {
-            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<AggregateEvent, Task>>());
+            if (!_eventSubscribers.ContainsKey(eventType)) _eventSubscribers.Add(eventType, new List<Func<Event, Task>>());
             var current = _eventSubscribers[eventType];
             if (!current.Contains(listener)) current.Add(listener);
         }
@@ -52,7 +52,7 @@
 
                 if (_eventSubscribers.ContainsKey(type))
                 {
-                    var handlers = new List<Func<AggregateEvent, Task>>(_eventSubscribers[type]);
+                    var handlers = new List<Func<Event, Task>>(_eventSubscribers[type]);
                     foreach (var handler in handlers) await handler(@event);
                 }
             }
@@ -60,7 +60,7 @@
 
         private readonly ILogger _logger;
         private Boolean _busy;
-        private readonly Queue<AggregateEvent> _queue;
-        private readonly Dictionary<Type, List<Func<AggregateEvent, Task>>> _eventSubscribers;
+        private readonly Queue<Event> _queue;
+        private readonly Dictionary<Type, List<Func<Event, Task>>> _eventSubscribers;
     }
 }

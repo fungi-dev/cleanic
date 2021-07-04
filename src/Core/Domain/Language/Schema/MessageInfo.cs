@@ -2,13 +2,11 @@
 {
     using System;
 
-    public abstract class MessageInfo : DomainObjectInfo
+    public class MessageInfo : DomainObjectInfo
     {
-        public Boolean BelongsToRootAggregate { get; }
-
-        protected MessageInfo(Type messageType, Boolean belongsToRootAggregate) : base(messageType)
+        public MessageInfo(Type messageType) : base(messageType)
         {
-            BelongsToRootAggregate = belongsToRootAggregate;
+            EnsureTermTypeCorrect(messageType, typeof(Message));
         }
     }
 }

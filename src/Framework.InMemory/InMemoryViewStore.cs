@@ -16,42 +16,42 @@
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, String aggregateId)
+        public Task<View> Load(ViewInfo viewInfo, String entityId)
         {
-            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
-            if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
+            if (viewInfo == null) throw new ArgumentNullException(nameof(viewInfo));
+            if (String.IsNullOrWhiteSpace(entityId)) throw new ArgumentNullException(nameof(entityId));
 
-            if (!_db.ContainsKey(aggregateViewInfo.Type)) return Task.FromResult<AggregateView>(null);
+            if (!_db.ContainsKey(viewInfo.Type)) return Task.FromResult<View>(null);
 
-            return Task.FromResult(_db[aggregateViewInfo.Type].ContainsKey(aggregateId) ? _db[aggregateViewInfo.Type][aggregateId] : null);
+            return Task.FromResult(_db[viewInfo.Type].ContainsKey(entityId) ? _db[viewInfo.Type][entityId] : null);
         }
 
-        public Task<AggregateView[]> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
+        public Task<View[]> Load(ViewInfo viewInfo, Expression<Func<View, Boolean>> filterExpression)
         {
-            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (viewInfo == null) throw new ArgumentNullException(nameof(viewInfo));
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
 
-            if (!_db.ContainsKey(aggregateViewInfo.Type)) return Task.FromResult(Array.Empty<AggregateView>());
+            if (!_db.ContainsKey(viewInfo.Type)) return Task.FromResult(Array.Empty<View>());
 
-            return Task.FromResult(_db[aggregateViewInfo.Type].Values.Where(filterExpression.Compile()).ToArray());
+            return Task.FromResult(_db[viewInfo.Type].Values.Where(filterExpression.Compile()).ToArray());
         }
 
-        public Task Save(AggregateView aggregateView)
+        public Task Save(View view)
         {
-            if (aggregateView == null) throw new ArgumentNullException(nameof(aggregateView));
+            if (view == null) throw new ArgumentNullException(nameof(view));
 
-            if (!_db.TryGetValue(aggregateView.GetType(), out var entities))
+            if (!_db.TryGetValue(view.GetType(), out var entities))
             {
-                _db.Add(aggregateView.GetType(), entities = new Dictionary<String, AggregateView>());
+                _db.Add(view.GetType(), entities = new Dictionary<String, View>());
             }
 
-            if (!entities.ContainsKey(aggregateView.AggregateId))
+            if (!entities.ContainsKey(view.EntityId))
             {
-                entities.Add(aggregateView.AggregateId, aggregateView);
+                entities.Add(view.EntityId, view);
             }
             else
             {
-                entities[aggregateView.AggregateId] = aggregateView;
+                entities[view.EntityId] = view;
             }
 
             return Task.CompletedTask;
@@ -63,7 +63,7 @@
             return Task.CompletedTask;
         }
 
-        private readonly Dictionary<Type, Dictionary<String, AggregateView>> _db = new Dictionary<Type, Dictionary<String, AggregateView>>();
+        private readonly Dictionary<Type, Dictionary<String, View>> _db = new Dictionary<Type, Dictionary<String, View>>();
         private readonly ILogger _logger;
     }
 }

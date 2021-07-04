@@ -1,13 +1,12 @@
 ﻿namespace Cleanic.Core
 {
     using System;
-    using System.Reflection;
 
     public class QueryInfo : MessageInfo
     {
-        public QueryInfo(Type queryType, Boolean belongsToRootAggregate) : base(queryType, belongsToRootAggregate)
+        public QueryInfo(Type queryType) : base(queryType)
         {
-            if (!queryType.GetTypeInfo().IsSubclassOf(typeof(Query))) throw new ArgumentOutOfRangeException(nameof(queryType));
+            EnsureTermTypeCorrect(queryType, typeof(Query));
         }
     }
 }

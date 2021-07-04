@@ -1,13 +1,12 @@
 ﻿namespace Cleanic.Core
 {
     using System;
-    using System.Reflection;
 
     public class CommandInfo : MessageInfo
     {
-        public CommandInfo(Type commandType, Boolean belongsToRootAggregate) : base(commandType, belongsToRootAggregate)
+        public CommandInfo(Type commandType) : base(commandType)
         {
-            if (!commandType.GetTypeInfo().IsSubclassOf(typeof(Command))) throw new ArgumentOutOfRangeException(nameof(commandType));
+            EnsureTermTypeCorrect(commandType, typeof(Command));
         }
     }
 }

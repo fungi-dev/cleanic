@@ -32,46 +32,46 @@
 
         public IMongoDatabase Db { get; private set; }
 
-        public async Task<AggregateView> Load(AggregateViewInfo aggregateViewInfo, String aggregateId)
+        public async Task<View> Load(ViewInfo viewInfo, String entityId)
         {
-            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
-            if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
+            if (viewInfo == null) throw new ArgumentNullException(nameof(viewInfo));
+            if (String.IsNullOrWhiteSpace(entityId)) throw new ArgumentNullException(nameof(entityId));
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
-            var filter = new BsonDocument("AggregateId", aggregateId);
+            var collection = Db.GetCollection<BsonDocument>(viewInfo.Id);
+            var filter = new BsonDocument("entityId", entityId);
 
             var documents = await collection.Find(filter).ToListAsync();
             var document = documents.SingleOrDefault();
             if (document == null) return null;
-            return (AggregateView)BsonSerializer.Deserialize(document, aggregateViewInfo.Type);
+            return (View)BsonSerializer.Deserialize(document, viewInfo.Type);
         }
 
-        public async Task<AggregateView[]> Load(AggregateViewInfo aggregateViewInfo, Expression<Func<AggregateView, Boolean>> filterExpression)
+        public async Task<View[]> Load(ViewInfo viewInfo, Expression<Func<View, Boolean>> filterExpression)
         {
-            if (aggregateViewInfo == null) throw new ArgumentNullException(nameof(aggregateViewInfo));
+            if (viewInfo == null) throw new ArgumentNullException(nameof(viewInfo));
             if (filterExpression == null) throw new ArgumentNullException(nameof(filterExpression));
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
+            var collection = Db.GetCollection<BsonDocument>(viewInfo.Id);
             //var filter = Builders<BsonDocument>.Filter.Eq(x => x.A, "1");
             //filter &= (Builders<User>.Filter.Eq(x => x.B, "4") | Builders<User>.Filter.Eq(x => x.B, "5"));
             var filter = new BsonDocument();
             var documents = await collection.Find(filter).ToListAsync();
-            var views = documents.Select(d => (AggregateView)BsonSerializer.Deserialize(d, aggregateViewInfo.Type));
+            var views = documents.Select(d => (View)BsonSerializer.Deserialize(d, viewInfo.Type));
             return views.Where(filterExpression.Compile()).ToArray();
         }
 
-        public async Task Save(AggregateView aggregateView)
+        public async Task Save(View view)
         {
-            if (aggregateView == null) throw new ArgumentNullException(nameof(aggregateView));
+            if (view == null) throw new ArgumentNullException(nameof(view));
 
-            var aggregateViewInfo = _projectionSchema.Language.GetAggregateView(aggregateView.GetType());
-            var collection = Db.GetCollection<BsonDocument>(aggregateViewInfo.Id);
-            var filter = new BsonDocument("AggregateId", aggregateView.AggregateId);
+            var viewInfo = _projectionSchema.Language.GetView(view.GetType());
+            var collection = Db.GetCollection<BsonDocument>(viewInfo.Id);
+            var filter = new BsonDocument("entityId", view.EntityId);
 
             var documents = await collection.Find(filter).ToListAsync();
             var document = documents.SingleOrDefault();
             if (document != null) await collection.DeleteOneAsync(filter);
-            await collection.InsertOneAsync(aggregateView.ToBsonDocument());
+            await collection.InsertOneAsync(view.ToBsonDocument());
         }
 
         public void Clear()

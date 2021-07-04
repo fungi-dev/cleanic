@@ -16,7 +16,7 @@
 
             foreach (var sagaInfo in _logicSchema.Sagas)
             {
-                foreach (var eventInfo in sagaInfo.AggregateEvents)
+                foreach (var eventInfo in sagaInfo.Events)
                 {
                     _eventStore.ListenEvents(eventInfo, e => ReactToEvent(e));
                     _logger.LogTrace("'{saga}' subscribed to '{event}'", sagaInfo, eventInfo);
@@ -29,9 +29,9 @@
         private readonly ICommandBus _commandBus;
         private readonly ILogger _logger;
 
-        private async Task ReactToEvent(AggregateEvent @event)
+        private async Task ReactToEvent(Event @event)
         {
-            var eventInfo = _logicSchema.GetAggregateEvent(@event.GetType());
+            var eventInfo = _logicSchema.GetEvent(@event.GetType());
             foreach (var sagaInfo in _logicSchema.GetReactingSagas(eventInfo))
             {
                 var saga = (Saga)Activator.CreateInstance(sagaInfo.Type);

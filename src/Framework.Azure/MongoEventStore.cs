@@ -39,32 +39,32 @@
 
         public IMongoDatabase Db { get; private set; }
 
-        public async Task<AggregateEvent[]> LoadEvents(AggregateInfo aggregateInfo, String aggregateId)
+        public async Task<Event[]> LoadEvents(EntityInfo entityInfo, String entityId)
         {
-            if (aggregateInfo == null) throw new ArgumentNullException(nameof(aggregateInfo));
-            if (String.IsNullOrWhiteSpace(aggregateId)) throw new ArgumentNullException(nameof(aggregateId));
+            if (entityInfo == null) throw new ArgumentNullException(nameof(entityInfo));
+            if (String.IsNullOrWhiteSpace(entityId)) throw new ArgumentNullException(nameof(entityId));
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.Id);
-            var filter = new BsonDocument("aggregateId", aggregateId);
+            var collection = Db.GetCollection<BsonDocument>(entityInfo.Id);
+            var filter = new BsonDocument("entityId", entityId);
             var documents = await collection.Find(filter).ToListAsync();
 
-            var events = new List<AggregateEvent>();
+            var events = new List<Event>();
             foreach (var doc in documents)
             {
                 var eventInfoId = doc.GetValue("eventInfoId").AsString;
-                var eventType = _logicSchema.FindAggregateEvent(eventInfoId).Type;
+                var eventType = _logicSchema.FindEvent(eventInfoId).Type;
                 var eventData = doc.GetValue("eventData").AsString;
-                events.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
+                events.Add((Event)JsonSerializer.Deserialize(eventData, eventType, _serializationOptions));
             }
             return events.ToArray();
         }
 
-        public async Task<AggregateEvent[]> LoadEvents(IEnumerable<AggregateEventInfo> eventInfos)
+        public async Task<Event[]> LoadEvents(IEnumerable<EventInfo> eventInfos)
         {
             eventInfos = eventInfos?.ToArray();
             if (eventInfos == null || !eventInfos.Any()) throw new ArgumentNullException(nameof(eventInfos));
 
-            var result = new List<AggregateEvent>();
+            var result = new List<Event>();
             foreach (var eventInfo in eventInfos)
             {
                 var collection = Db.GetCollection<BsonDocument>(_logicSchema.GetAggregate(eventInfo).Id);
@@ -73,43 +73,43 @@
                 foreach (var doc in documents)
                 {
                     var eventData = doc.GetValue("eventData").AsString;
-                    result.Add((AggregateEvent)JsonSerializer.Deserialize(eventData, eventInfo.Type, _serializationOptions));
+                    result.Add((Event)JsonSerializer.Deserialize(eventData, eventInfo.Type, _serializationOptions));
                 }
             }
 
             return result.OrderBy(x => x.EventOccurred).ToArray();
         }
 
-        public async Task SaveEvents(String aggregateId, UInt32 expectedEventsCount, IEnumerable<AggregateEvent> events)
+        public async Task SaveEvents(String entityId, UInt32 expectedEventsCount, IEnumerable<Event> events)
         {
-            if (aggregateId == null) throw new ArgumentNullException(nameof(aggregateId));
+            if (entityId == null) throw new ArgumentNullException(nameof(entityId));
             events = events?.ToArray();
             if (events == null || !events.Any()) throw new ArgumentNullException(nameof(events));
 
-            var eventInfos = events.Select(x => _logicSchema.GetAggregateEvent(x.GetType()));
-            var aggregateLogicInfos = eventInfos.Select(x => _logicSchema.GetAggregate(x).AggregateFromLanguage);
-            var aggregateInfo = aggregateLogicInfos.Distinct().Single();
+            var eventInfos = events.Select(x => _logicSchema.GetEvent(x.GetType()));
+            var entityInfos = eventInfos.Select(x => _logicSchema.GetAggregate(x).Entity);
+            var entityInfo = entityInfos.Distinct().Single();
 
-            var collection = Db.GetCollection<BsonDocument>(aggregateInfo.Id);
-            var filter = new BsonDocument("aggregateId", aggregateId);
+            var collection = Db.GetCollection<BsonDocument>(entityInfo.Id);
+            var filter = new BsonDocument("entityId", entityId);
             var documents = await collection.Find(filter).ToListAsync();
 
             var actualEventsCount = documents.Any() ? documents.Max(x => (UInt32)x.GetValue("aggregateVersion").AsInt64) : 0;
             if (expectedEventsCount != actualEventsCount)
             {
-                _logger.LogError("Can't save events for aggregate {aggregateName} ({aggregateId}), it was already changed", aggregateInfo.Name, aggregateId);
-                throw new Exception($"Can't save events for aggregate {aggregateInfo.Name} ({aggregateId}), it was already changed");
+                _logger.LogError("Can't save events for aggregate {entityName} ({entityId}), it was already changed", entityInfo.Name, entityId);
+                throw new Exception($"Can't save events for aggregate {entityInfo.Name} ({entityId}), it was already changed");
             }
 
             var newDocuments = new List<BsonDocument>();
             foreach (var @event in events)
             {
                 expectedEventsCount++;
-                var eventInfo = _logicSchema.GetAggregateEvent(@event.GetType());
+                var eventInfo = _logicSchema.GetEvent(@event.GetType());
                 var eventData = JsonSerializer.Serialize(@event, eventInfo.Type, _serializationOptions);
                 var document = new BsonDocument
                 {
-                    { "aggregateId", aggregateId },
+                    { "entityId", entityId },
                     { "aggregateVersion", expectedEventsCount },
                     { "eventInfoId", eventInfo.Id },
                     { "eventMoment", @event.EventOccurred },
@@ -121,7 +121,7 @@
             foreach (var @event in events) await _bus.Publish(@event);
         }
 
-        public void ListenEvents(AggregateEventInfo eventInfo, Func<AggregateEvent, Task> listener)
+        public void ListenEvents(EventInfo eventInfo, Func<Event, Task> listener)
         {
             if (eventInfo == null) throw new ArgumentNullException(nameof(eventInfo));
             if (listener == null) throw new ArgumentNullException(nameof(listener));

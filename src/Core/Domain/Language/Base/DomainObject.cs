@@ -6,12 +6,12 @@
     using System.Reflection;
 
     /// <summary>
-    /// The object having meaning in the domain.
+    /// Any object having meaning in the domain.
     /// </summary>
     public abstract class DomainObject : IEquatable<DomainObject>
     {
         /// <summary>
-        /// When overriden in a derived class, returns all components which constitute identity.
+        /// Get all components which constitute object identity.
         /// </summary>
         /// <returns>An ordered list of identity components.</returns>
         protected virtual IEnumerable<Object> GetIdentityComponents()

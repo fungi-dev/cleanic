@@ -27,8 +27,8 @@
             var sagaTypes = assembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Saga)));
             _sagaInfos.AddRange(sagaTypes.Select(x => new SagaInfo(x)));
 
-            var aggregateLogicTypes = FindAggregateLogicTypesInAssembly(assembly);
-            _aggregateLogicInfos.AddRange(aggregateLogicTypes.Select(x => ProduceAggregateLogicInfoFromType(x.Item1, x.Item2)));
+            var aggregateTypes = FindAggregateTypesInAssembly(assembly);
+            _aggregateInfos.AddRange(aggregateTypes.Select(x => ProduceAggregateInfoFromType(x.Item1, x.Item2)));
 
             return Build();
         }
@@ -39,14 +39,14 @@
 
             if (type.IsSubclassOf(typeof(Aggregate)))
             {
-                var aggTypeArg = type.BaseType.GenericTypeArguments.Single();
-                var aggregateInfo = _languageSchema.Aggregates.SingleOrDefault(x => x.Type == aggTypeArg);
-                if (aggregateInfo == null)
+                var entityTypeArg = type.BaseType.GenericTypeArguments.Single();
+                var entityInfo = _languageSchema.Entities.SingleOrDefault(x => x.Type == entityTypeArg);
+                if (entityInfo == null)
                 {
-                    var m = $"There is no aggregate in language for aggregate logic '{type.FullName}'";
+                    var m = $"There is no entity in language for aggregate '{type.FullName}'";
                     throw new LogicSchemaException(m);
                 }
-                _aggregateLogicInfos.Add(ProduceAggregateLogicInfoFromType(aggregateInfo, type));
+                _aggregateInfos.Add(ProduceAggregateInfoFromType(entityInfo, type));
             }
             else if (type.IsSubclassOf(typeof(Service)))
             {
@@ -58,7 +58,7 @@
             }
             else
             {
-                var m = $"Type '{type.FullName}' added in logic schema as an aggregate but it isn't subclass of AggregateLogic";
+                var m = $"Type '{type.FullName}' added in logic schema as an aggregate but it isn't subclass of {nameof(Aggregate)}";
                 throw new LogicSchemaException(m);
             }
 
@@ -67,7 +67,7 @@
 
         public LogicSchema Build()
         {
-            var servicesRequiredByAggregates = _aggregateLogicInfos.SelectMany(x => x.Dependencies).SelectMany(x => x.Value);
+            var servicesRequiredByAggregates = _aggregateInfos.SelectMany(x => x.Dependencies).SelectMany(x => x.Value);
             foreach (var servicesRequiredByAggregate in servicesRequiredByAggregates)
             {
                 if (_serviceInfos.Any(x => x.Type == servicesRequiredByAggregate.Type))
@@ -82,61 +82,61 @@
                 var eventTypes = sagaInfo.Type.GetTypeInfo().DeclaredMethods
                     .SelectMany(m => m.GetParameters())
                     .Select(p => p.ParameterType)
-                    .Where(t => t.GetTypeInfo().IsSubclassOf(typeof(AggregateEvent)))
+                    .Where(t => t.IsSubclassOf(typeof(Event)))
                     .Distinct();
-                var eventInfosFromAggregates = _aggregateLogicInfos.SelectMany(x => x.Events).ToArray();
-                var eventInfos = new List<AggregateEventInfo>();
+                var eventInfosFromAggregates = _aggregateInfos.SelectMany(x => x.Events).ToArray();
+                var eventInfos = new List<EventInfo>();
                 foreach (var eventType in eventTypes)
                 {
                     var eventInfo = eventInfosFromAggregates.SingleOrDefault(x => x.Type == eventType);
-                    if (eventInfo == null) eventInfo = new AggregateEventInfo(eventType);
+                    if (eventInfo == null) eventInfo = new EventInfo(eventType);
                     eventInfos.Add(eventInfo);
                 }
-                sagaInfo.AggregateEvents = eventInfos.ToImmutableHashSet();
+                sagaInfo.Events = eventInfos.ToImmutableHashSet();
             }
 
-            foreach (var aggregateLogicInfo in _aggregateLogicInfos)
+            foreach (var aggregateInfo in _aggregateInfos)
             {
-                foreach (var command in aggregateLogicInfo.AggregateFromLanguage.Commands)
+                foreach (var command in aggregateInfo.Entity.Commands)
                 {
                     var dependencies = _dependencies.Where(x => x.Key.Type == command.Type);
-                    aggregateLogicInfo.Dependencies = dependencies.ToImmutableDictionary(x => x.Key, x => (IReadOnlyCollection<ServiceInfo>)x.Value.Select(t => _serviceInfos.Single(s => s.Type == t)).ToImmutableHashSet());
+                    aggregateInfo.Dependencies = dependencies.ToImmutableDictionary(x => x.Key, x => (IReadOnlyCollection<ServiceInfo>)x.Value.Select(t => _serviceInfos.Single(s => s.Type == t)).ToImmutableHashSet());
                 }
             }
 
             return new LogicSchema
             {
                 Language = _languageSchema,
-                Aggregates = _aggregateLogicInfos.ToImmutableHashSet(),
+                Aggregates = _aggregateInfos.ToImmutableHashSet(),
                 Sagas = _sagaInfos.ToImmutableHashSet(),
                 Services = _serviceInfos.ToImmutableHashSet()
             };
         }
 
         private readonly LanguageSchema _languageSchema;
-        private readonly List<AggregateLogicInfo> _aggregateLogicInfos = new List<AggregateLogicInfo>();
-        private readonly List<ServiceInfo> _serviceInfos = new List<ServiceInfo>();
-        private readonly List<SagaInfo> _sagaInfos = new List<SagaInfo>();
-        private readonly Dictionary<CommandInfo, List<Type>> _dependencies = new Dictionary<CommandInfo, List<Type>>();
+        private readonly List<AggregateInfo> _aggregateInfos = new();
+        private readonly List<ServiceInfo> _serviceInfos = new();
+        private readonly List<SagaInfo> _sagaInfos = new();
+        private readonly Dictionary<CommandInfo, List<Type>> _dependencies = new();
 
-        private IEnumerable<(AggregateInfo, Type)> FindAggregateLogicTypesInAssembly(Assembly logicAssembly)
+        private IEnumerable<(EntityInfo, Type)> FindAggregateTypesInAssembly(Assembly logicAssembly)
         {
-            var aggregateLogicTypes = logicAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Aggregate)));
-            foreach (var aggregateInfo in _languageSchema.Aggregates)
+            var aggregateTypes = logicAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Aggregate)));
+            foreach (var entityInfo in _languageSchema.Entities)
             {
-                var aggregateLogicTypesForOneAggregate = aggregateLogicTypes.Where(x => x.BaseType.GenericTypeArguments.Single() == aggregateInfo.Type);
-                foreach (var aggregateLogicTypeForOneAggregate in aggregateLogicTypesForOneAggregate)
+                var aggregateTypesForOneEntity = aggregateTypes.Where(x => x.BaseType.GenericTypeArguments.Single() == entityInfo.Type);
+                foreach (var aggregateTypeForOneEntity in aggregateTypesForOneEntity)
                 {
-                    yield return (aggregateInfo, aggregateLogicTypeForOneAggregate);
+                    yield return (entityInfo, aggregateTypeForOneEntity);
                 }
             }
         }
 
-        private AggregateLogicInfo ProduceAggregateLogicInfoFromType(AggregateInfo aggregateInfo, Type aggregateLogicType)
+        private AggregateInfo ProduceAggregateInfoFromType(EntityInfo entityInfo, Type aggregateType)
         {
-            var aggregateLogicInfo = new AggregateLogicInfo(aggregateLogicType, aggregateInfo);
+            var aggregateInfo = new AggregateInfo(aggregateType, entityInfo);
 
-            var commandHandlersWithDependencies = aggregateLogicInfo.Type.GetTypeInfo().DeclaredMethods
+            var commandHandlersWithDependencies = aggregateInfo.Type.GetTypeInfo().DeclaredMethods
                 .Where(m => m.GetParameters().Length > 1)
                 .Where(m => m.GetParameters().Any(p => p.ParameterType.GetTypeInfo().IsSubclassOf(typeof(Command))));
             foreach (var handler in commandHandlersWithDependencies)
@@ -158,10 +158,10 @@
                 }
             }
 
-            var eventTypes = aggregateLogicType.GetTypeInfo().DeclaredNestedTypes.Where(x => x.IsSubclassOf(typeof(AggregateEvent)));
-            aggregateLogicInfo.Events = eventTypes.Select(x => new AggregateEventInfo(x)).ToImmutableHashSet();
+            var eventTypes = aggregateType.GetTypeInfo().DeclaredNestedTypes.Where(x => x.IsSubclassOf(typeof(Event)));
+            aggregateInfo.Events = eventTypes.Select(x => new EventInfo(x)).ToImmutableHashSet();
 
-            return aggregateLogicInfo;
+            return aggregateInfo;
         }
     }
 }

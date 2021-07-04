@@ -13,8 +13,6 @@
 
         protected DomainObjectInfo(Type domainObjectType)
         {
-            if (domainObjectType == null) throw new ArgumentNullException(nameof(domainObjectType));
-
             var guidAttr = domainObjectType.CustomAttributes.SingleOrDefault(x => x.AttributeType == typeof(GuidAttribute));
             if (guidAttr == null) throw new ArgumentException($"Domain object '{domainObjectType.Name}' isn't marked with GuidAttribute", nameof(domainObjectType));
             Id = domainObjectType.GUID.ToString();
@@ -36,5 +34,20 @@
         }
 
         public override String ToString() => Name;
+
+        protected static void EnsureTermTypeCorrect(Type termType, Type baseType)
+        {
+            if (termType == null) throw new ArgumentNullException(nameof(termType));
+            if (termType.IsAbstract)
+            {
+                var m = $"Adding '{termType.FullName}' to language schema failed: class should not be abstract";
+                throw new LanguageSchemaException(m);
+            }
+            if (!termType.IsSubclassOf(baseType))
+            {
+                var m = $"Adding '{termType.FullName}' to language schema failed: class should be inherited from '{baseType.FullName}'";
+                throw new LanguageSchemaException(m);
+            }
+        }
     }
 }

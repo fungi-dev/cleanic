@@ -25,7 +25,7 @@
             }
         }
 
-        private async Task ApplyEvent(AggregateEvent @event)
+        private async Task ApplyEvent(Event @event)
         {
             foreach (var projectorInfo in _projectionSchema.Projectors)
             {
@@ -35,19 +35,19 @@
                 {
                     var view = projector.CreateView(@event);
                     await _viewStore.Save(view);
-                    _logger.LogTrace("'{projector}' created '{view}' with '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
+                    _logger.LogTrace("'{projector}' created '{view}' with '{event}'", projectorInfo, projectorInfo.View, @event);
                     continue;
                 }
 
                 if (projectorInfo.UpdateEvents.Any(e => e.Type == @event.GetType()))
                 {
-                    var filter = projector.GetFilter(@event, projectorInfo.AggregateView);
-                    var views = await _viewStore.Load(projectorInfo.AggregateView, filter);
+                    var filter = projector.GetFilter(@event);
+                    var views = await _viewStore.Load(projectorInfo.View, filter);
                     foreach (var view in views)
                     {
                         projector.UpdateView(view, @event);
                         await _viewStore.Save(view);
-                        _logger.LogTrace("'{projector}' updated '{view}' with '{event}'", projectorInfo, projectorInfo.AggregateView, @event);
+                        _logger.LogTrace("'{projector}' updated '{view}' with '{event}'", projectorInfo, projectorInfo.View, @event);
                     }
                 }
             }
