@@ -29,29 +29,21 @@
         {
             var commandInfo = _logicSchema.Language.GetCommand(command.GetType());
             var aggregateInfo = _logicSchema.GetAggregate(commandInfo);
-            var aggregate = await LoadOrCreate(command.EntityId, aggregateInfo.Entity);
+            var aggregate = (Aggregate)Activator.CreateInstance(aggregateInfo.Type);
+
+            var persistedEvents = await _eventStore.LoadEvents(aggregateInfo.Entity, command.EntityId);
+            aggregate.LoadFromHistory(persistedEvents);
+
             var serviceInfos = aggregateInfo.GetDependencies(commandInfo);
             await aggregate.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
-            await Save(aggregate);
-            _logger.LogTrace("'{command}' handled", command);
-        }
 
-        private async Task<Aggregate> LoadOrCreate(String id, EntityInfo entityInfo)
-        {
-            var aggregateInfo = _logicSchema.GetAggregate(entityInfo);
-            var persistedEvents = await _eventStore.LoadEvents(entityInfo, id);
-            var aggregate = (Aggregate)Activator.CreateInstance(aggregateInfo.Type, new[] { id });
-            aggregate.LoadFromHistory(persistedEvents);
-            return aggregate;
-        }
-
-        private async Task Save(Aggregate aggregate)
-        {
             if (aggregate.ProducedEvents.Any())
             {
                 var persistedEventsCount = Convert.ToUInt32(aggregate.Version - aggregate.ProducedEvents.Count);
                 await _eventStore.SaveEvents(aggregate.EntityId, persistedEventsCount, aggregate.ProducedEvents);
             }
+
+            _logger.LogTrace("'{command}' handled", command);
         }
     }
 }

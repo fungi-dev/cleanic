@@ -9,4 +9,6 @@
 
         public override String ToString() => $"{GetType().Name} #{EntityId}";
     }
+
+    public abstract class InitialEvent : Event { }
 }

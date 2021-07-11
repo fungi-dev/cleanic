@@ -10,25 +10,35 @@
 
     public abstract class Aggregate : DomainObject
     {
-        public String EntityId { get; }
+        public String EntityId { get; private set; }
         public UInt32 Version { get; private set; }
-
-        public Aggregate(String entityId)
-        {
-            EntityId = entityId;
-        }
 
         public IReadOnlyCollection<Event> ProducedEvents => _changes.ToImmutableList();
 
         public void LoadFromHistory(ICollection<Event> history)
         {
+            if (history == null) throw new ArgumentNullException(nameof(history));
+            if (!history.Any()) return;
+
+            var initialEvents = history.OfType<InitialEvent>();
+            if (initialEvents.Count() != 1) throw new MisusingLogicException("Bad aggregate '{GetType().FullName}' state (many or no initial events), can't load it from history");
+            EntityId = initialEvents.Single().EntityId;
+
             foreach (var @event in history) Apply(@event, false);
         }
 
         public async Task Do(Command command, IEnumerable<Service> dependencies)
         {
+            if (command is InitialCommand)
+            {
+                if (Version > 0) throw new MisusingLogicException($"You can't send initial command to already initialized aggregate '{GetType().FullName}'");
+                EntityId = command.EntityId;
+            }
+
+            if (command is not InitialCommand && Version == 0) throw new MisusingLogicException($"The first command sent to aggregate '{GetType().FullName}' must be initial one");
+
             var methods = GetType().GetTypeInfo().DeclaredMethods.Where(m => m.GetParameters().Any(p => p.ParameterType == command.GetType()));
-            if (methods.Count() != 1) throw new Exception($"'{GetType().FullName}' don't know how to do a '{command.GetType().FullName}'");
+            if (methods.Count() != 1) throw new NotImplementedException($"'{GetType().FullName}' don't know how to do a '{command.GetType().FullName}'");
             var method = methods.Single();
 
             var @params = method.GetParameters();
@@ -91,6 +101,10 @@
             yield return EntityId;
         }
 
+        /// <summary>
+        /// Add event to aggregate history (update method will be invoked if it exists).
+        /// No need to fill EntityId and EventOccurred properties, they will be filled automatically.
+        /// </summary>
         protected void Apply(Event @event)
         {
             Apply(@event, true);
@@ -115,12 +129,8 @@
             Version++;
         }
 
-        private readonly List<Event> _changes = new List<Event>();
+        private readonly List<Event> _changes = new();
     }
 
-    public abstract class Aggregate<T> : Aggregate
-        where T : Entity
-    {
-        public Aggregate(String entityId) : base(entityId) { }
-    }
+    public abstract class Aggregate<T> : Aggregate where T : Entity { }
 }

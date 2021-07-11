@@ -19,8 +19,8 @@
 
         public async Task<View> Get(Query query, String accessToken)
         {
-            if (query == null) throw new ArgumentNullException(nameof(query));
             if (String.IsNullOrWhiteSpace(accessToken)) throw new ArgumentNullException(nameof(accessToken));
+            if (query == null) throw new ArgumentNullException(nameof(query));
 
             var queryInfo = Language.GetQuery(query.GetType());
             var viewInfo = Language.GetView(queryInfo);
@@ -29,8 +29,9 @@
 
         public async Task Do(Command command, String accessToken)
         {
-            if (command == null) throw new ArgumentNullException(nameof(command));
             if (String.IsNullOrWhiteSpace(accessToken)) throw new ArgumentNullException(nameof(accessToken));
+            if (command == null) throw new ArgumentNullException(nameof(command));
+            if (command is IInternalCommand) throw new InvalidOperationException("Can't accept internal command from outside of application");
 
             await _commandBus.Send(command);
         }

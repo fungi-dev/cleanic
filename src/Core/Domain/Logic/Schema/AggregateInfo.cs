@@ -19,6 +19,7 @@
 
             var eventTypes = Type.GetTypeInfo().DeclaredNestedTypes.Where(x => x.IsSubclassOf(typeof(Event)));
             Events = eventTypes.Select(x => EventInfo.Get(x)).ToImmutableHashSet();
+            EnsureExactOneInitialEvent(Events);
 
             var commands = new List<CommandInfo>();
             var dependencies = new List<ServiceInfo>();
@@ -70,5 +71,13 @@
         }
 
         private readonly Dictionary<CommandInfo, ServiceInfo[]> _dependencies;
+
+        private void EnsureExactOneInitialEvent(IEnumerable<EventInfo> eventInfos)
+        {
+            var initialEvents = eventInfos.Where(i => i.IsInitial).ToArray();
+
+            if (initialEvents.Length == 0) throw new LogicSchemaException($"Aggregate '{Type.FullName}' has no initial events");
+            if (initialEvents.Length > 1) throw new LogicSchemaException($"Aggregate '{Type.FullName}' has more than one initial events");
+        }
     }
 }

@@ -6,7 +6,12 @@
     public abstract class Command : Message { }
 
     /// <summary>
-    /// Command that not supposed to be used by external actors (exists only for this domain sagas).
+    /// Command for entity creation.
     /// </summary>
-    public abstract class InternalCommand : Command { }
+    public abstract class InitialCommand : Command { }
+
+    /// <summary>
+    /// Command that not supposed to be used by external actors.
+    /// </summary>
+    public interface IInternalCommand { }
 }

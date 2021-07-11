@@ -9,6 +9,10 @@
         private EventInfo(Type eventType) : base(eventType)
         {
             EnsureTermTypeCorrect<Event>(eventType);
+
+            IsInitial = Type.IsSubclassOf(typeof(InitialEvent));
         }
+
+        public Boolean IsInitial { get; }
     }
 }

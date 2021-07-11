@@ -9,6 +9,10 @@
         private CommandInfo(Type commandType) : base(commandType)
         {
             EnsureTermTypeCorrect<Command>(commandType);
+
+            IsInitial = Type.IsSubclassOf(typeof(InitialCommand));
         }
+
+        public Boolean IsInitial { get; }
     }
 }
