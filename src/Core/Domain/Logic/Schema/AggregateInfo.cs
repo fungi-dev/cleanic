@@ -1,25 +1,74 @@
 ﻿namespace Cleanic.Core
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Collections.ObjectModel;
+    using System.Linq;
+    using System.Reflection;
 
-    public class AggregateInfo : DomainObjectInfo
+    public sealed class AggregateInfo : DomainObjectInfo
     {
-        public EntityInfo Entity { get; }
-        public IReadOnlyCollection<EventInfo> Events { get; internal set; }
-        public IReadOnlyDictionary<CommandInfo, IReadOnlyCollection<ServiceInfo>> Dependencies { get; internal set; }
+        public static AggregateInfo Get(Type type) => (AggregateInfo)Get(type, () => new AggregateInfo(type));
 
-        public AggregateInfo(Type aggregateType, EntityInfo entityInfo) : base(aggregateType)
+        private AggregateInfo(Type aggregateType) : base(aggregateType)
         {
-            EnsureTermTypeCorrect(aggregateType, typeof(Aggregate));
-            Entity = entityInfo ?? throw new ArgumentNullException(nameof(entityInfo));
-            if (Id != Entity.Id) throw new LogicSchemaException("Aggregate must has same identifier as linked Entity");
-            Name = Entity.Name;
+            EnsureTermTypeCorrect<Aggregate>(aggregateType);
 
-            Events = Array.Empty<EventInfo>().ToImmutableHashSet();
-            Dependencies = new ReadOnlyDictionary<CommandInfo, IReadOnlyCollection<ServiceInfo>>(new Dictionary<CommandInfo, IReadOnlyCollection<ServiceInfo>>());
+            Entity = EntityInfo.Get(Type.BaseType.GenericTypeArguments.Single());
+
+            var eventTypes = Type.GetTypeInfo().DeclaredNestedTypes.Where(x => x.IsSubclassOf(typeof(Event)));
+            Events = eventTypes.Select(x => EventInfo.Get(x)).ToImmutableHashSet();
+
+            var commands = new List<CommandInfo>();
+            var dependencies = new List<ServiceInfo>();
+            _dependencies = new();
+            foreach (var method in Type.GetRuntimeMethods())
+            {
+                var paramTypes = method.GetParameters().Select(p =>
+                {
+                    if (p.ParameterType.GetInterface(nameof(IEnumerable)) != null)
+                    {
+                        var elementType = p.ParameterType.GetElementType();
+                        if (!p.ParameterType.IsArray)
+                        {
+                            if (p.ParameterType.GenericTypeArguments.Length != 1) throw new NotImplementedException();
+                            elementType = p.ParameterType.GetGenericArguments().Single();
+                        }
+                        return elementType;
+                    }
+
+                    return p.ParameterType;
+                });
+                var cmdParams = paramTypes.Where(t => t.IsSubclassOf(typeof(Command)));
+                if (cmdParams.Count() != 1) continue;
+
+                var cmdInfo = CommandInfo.Get(cmdParams.Single());
+                commands.Add(cmdInfo);
+
+                var svcParams = paramTypes.Where(t => t.IsSubclassOf(typeof(Service)));
+                if (svcParams.Any())
+                {
+                    var svcInfos = svcParams.Select(t => ServiceInfo.Get(t)).ToArray();
+                    _dependencies.Add(cmdInfo, svcInfos);
+                    dependencies.AddRange(svcInfos);
+                }
+            }
+            Commands = commands.ToImmutableHashSet();
+            Dependencies = dependencies.ToImmutableHashSet();
         }
+
+        public EntityInfo Entity { get; }
+        public IReadOnlyCollection<EventInfo> Events { get; }
+        public IReadOnlyCollection<CommandInfo> Commands { get; }
+        public IReadOnlyCollection<ServiceInfo> Dependencies { get; }
+
+        public IReadOnlyCollection<ServiceInfo> GetDependencies(CommandInfo commandInfo)
+        {
+            if (!_dependencies.TryGetValue(commandInfo, out var deps)) deps = Array.Empty<ServiceInfo>();
+            return deps.ToImmutableHashSet();
+        }
+
+        private readonly Dictionary<CommandInfo, ServiceInfo[]> _dependencies;
     }
 }

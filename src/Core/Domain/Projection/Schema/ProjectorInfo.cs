@@ -3,20 +3,47 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Linq;
+    using System.Reflection;
 
-    public class ProjectorInfo : DomainObjectInfo
+    public sealed class ProjectorInfo : DomainObjectInfo
     {
-        public ViewInfo View { get; }
-        public IReadOnlyCollection<EventInfo> CreateEvents { get; internal set; }
-        public IReadOnlyCollection<EventInfo> UpdateEvents { get; internal set; }
+        public static ProjectorInfo Get(Type type) => (ProjectorInfo)Get(type, () => new ProjectorInfo(type));
 
-        public ProjectorInfo(Type projectorType, ViewInfo viewInfo) : base(projectorType)
+        private ProjectorInfo(Type projectorType) : base(projectorType)
         {
-            EnsureTermTypeCorrect(projectorType, typeof(Projector));
-            View = viewInfo ?? throw new ArgumentNullException(nameof(viewInfo));
+            EnsureTermTypeCorrect<Projector>(projectorType);
+            
+            var viewType = projectorType
+                .GetRuntimeMethods()
+                .SelectMany(m => m.GetParameters())
+                .Select(p => p.ParameterType)
+                .Where(p => p.IsSubclassOf(typeof(View)))
+                .Distinct()
+                .Single();
+            View = ViewInfo.Get(viewType);
 
-            CreateEvents = Array.Empty<EventInfo>().ToImmutableHashSet();
-            UpdateEvents = Array.Empty<EventInfo>().ToImmutableHashSet();
+            var createEventTypes = Type.GetTypeInfo().DeclaredMethods
+                .Where(m => m.ReturnType.IsSubclassOf(typeof(View)))
+                .Where(m => m.GetParameters().Length == 1)
+                .SelectMany(m => m.GetParameters())
+                .Select(p => p.ParameterType)
+                .Where(t => t.IsSubclassOf(typeof(Event)))
+                .Distinct();
+            CreateEvents = createEventTypes.Select(t => EventInfo.Get(t)).ToImmutableHashSet();
+
+            var updateEventTypes = Type.GetTypeInfo().DeclaredMethods
+                .Where(m => m.ReturnType == typeof(void))
+                .Where(m => m.GetParameters().Length == 2)
+                .SelectMany(m => m.GetParameters())
+                .Select(p => p.ParameterType)
+                .Where(t => t.IsSubclassOf(typeof(Event)))
+                .Distinct();
+            UpdateEvents = updateEventTypes.Select(t => EventInfo.Get(t)).ToImmutableHashSet();
         }
-    }
+   
+        public ViewInfo View { get; }
+        public IReadOnlyCollection<EventInfo> CreateEvents { get; }
+        public IReadOnlyCollection<EventInfo> UpdateEvents { get; }
+ }
 }

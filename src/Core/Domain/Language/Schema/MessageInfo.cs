@@ -2,11 +2,8 @@
 {
     using System;
 
-    public class MessageInfo : DomainObjectInfo
+    public abstract class MessageInfo : DomainObjectInfo
     {
-        public MessageInfo(Type messageType) : base(messageType)
-        {
-            EnsureTermTypeCorrect(messageType, typeof(Message));
-        }
+        protected MessageInfo(Type messageType) : base(messageType) { }
     }
 }

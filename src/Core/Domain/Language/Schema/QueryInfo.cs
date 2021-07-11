@@ -2,11 +2,13 @@
 {
     using System;
 
-    public class QueryInfo : MessageInfo
+    public sealed class QueryInfo : MessageInfo
     {
-        public QueryInfo(Type queryType) : base(queryType)
+        public static QueryInfo Get(Type type) => (QueryInfo)Get(type, () => new QueryInfo(type));
+
+        private QueryInfo(Type queryType) : base(queryType)
         {
-            EnsureTermTypeCorrect(queryType, typeof(Query));
+            EnsureTermTypeCorrect<Query>(queryType);
         }
     }
 }

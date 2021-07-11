@@ -2,14 +2,22 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Linq;
+    using System.Reflection;
 
-    public class ViewInfo : MessageInfo
+    public sealed class ViewInfo : MessageInfo
     {
-        public IReadOnlyCollection<QueryInfo> Queries { get; internal set; }
+        public static ViewInfo Get(Type type) => (ViewInfo)Get(type, () => new ViewInfo(type));
 
-        public ViewInfo(Type viewType) : base(viewType)
+        private ViewInfo(Type viewType) : base(viewType)
         {
-            EnsureTermTypeCorrect(viewType, typeof(View));
+            EnsureTermTypeCorrect<View>(viewType);
+
+            var queryTypes = Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).IsAssignableFrom(x));
+            Queries = queryTypes.Select(x => QueryInfo.Get(x)).ToImmutableHashSet();
         }
+
+        public IReadOnlyCollection<QueryInfo> Queries { get; }
     }
 }

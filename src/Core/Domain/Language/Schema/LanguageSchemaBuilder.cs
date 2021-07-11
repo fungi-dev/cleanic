@@ -16,15 +16,25 @@
     {
         public LanguageSchema BuildFromAssembly(Assembly assembly)
         {
-            var types = FindEntityTypesInAssembly(assembly);
-            _entityInfos = types.Select(x => ProduceEntityInfoFromType(x)).ToList();
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+
+            var entityTypes = assembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Entity)));
+            foreach (var entityType in entityTypes) Add(entityType);
 
             return Build();
         }
 
-        public LanguageSchemaBuilder Add<T>()
+        public LanguageSchemaBuilder Add<T>() where T : Entity
         {
-            _entityInfos.Add(ProduceEntityInfoFromType(typeof(T)));
+            Add(typeof(T));
+            return this;
+        }
+
+        public LanguageSchemaBuilder Add(Type entityType)
+        {
+            if (entityType == null) throw new ArgumentNullException(nameof(entityType));
+
+            _entityInfos.Add(EntityInfo.Get(entityType));
             return this;
         }
 
@@ -33,28 +43,6 @@
             return new LanguageSchema { Entities = _entityInfos.ToImmutableHashSet() };
         }
 
-        private List<EntityInfo> _entityInfos = new();
-
-        private IEnumerable<Type> FindEntityTypesInAssembly(Assembly languageAssembly) => languageAssembly.DefinedTypes.Where(x => x.IsSubclassOf(typeof(Entity)));
-
-        private EntityInfo ProduceEntityInfoFromType(Type entityType)
-        {
-            var entityInfo = new EntityInfo(entityType);
-
-            var nested = entityType.GetTypeInfo().DeclaredNestedTypes;
-
-            var commandTypes = nested.Where(x => x.IsSubclassOf(typeof(Command)));
-            entityInfo.Commands = commandTypes.Select(x => new CommandInfo(x)).ToImmutableHashSet();
-
-            var viewTypes = nested.Where(x => x.IsSubclassOf(typeof(View)));
-            entityInfo.Views = viewTypes.Select(x => new ViewInfo(x)).ToImmutableHashSet();
-            foreach (var viewInfo in entityInfo.Views)
-            {
-                var queryTypes = viewInfo.Type.GetTypeInfo().DeclaredNestedTypes.Where(x => typeof(Query).GetTypeInfo().IsAssignableFrom(x));
-                viewInfo.Queries = queryTypes.Select(x => new QueryInfo(x)).ToImmutableHashSet();
-            }
-
-            return entityInfo;
-        }
+        private readonly List<EntityInfo> _entityInfos = new();
     }
 }

@@ -7,10 +7,6 @@
 
     public abstract class DomainObjectInfo : IEquatable<DomainObjectInfo>
     {
-        public String Id { get; }
-        public String Name { get; protected set; }
-        public Type Type { get; }
-
         protected DomainObjectInfo(Type domainObjectType)
         {
             var guidAttr = domainObjectType.CustomAttributes.SingleOrDefault(x => x.AttributeType == typeof(GuidAttribute));
@@ -20,6 +16,10 @@
             Type = domainObjectType;
             Name = domainObjectType.Name;
         }
+
+        public String Id { get; }
+        public String Name { get; protected set; }
+        public Type Type { get; }
 
         public override Boolean Equals(Object obj) => Equals(obj as DomainObjectInfo);
 
@@ -35,19 +35,30 @@
 
         public override String ToString() => Name;
 
-        protected static void EnsureTermTypeCorrect(Type termType, Type baseType)
+        private static readonly List<DomainObjectInfo> _instances = new();
+
+        protected static void EnsureTermTypeCorrect<T>(Type termType)
         {
+            var baseType = typeof(T);
             if (termType == null) throw new ArgumentNullException(nameof(termType));
             if (termType.IsAbstract)
             {
-                var m = $"Adding '{termType.FullName}' to language schema failed: class should not be abstract";
+                var m = $"Adding '{termType.FullName}' to schema failed: class should not be abstract";
                 throw new LanguageSchemaException(m);
             }
             if (!termType.IsSubclassOf(baseType))
             {
-                var m = $"Adding '{termType.FullName}' to language schema failed: class should be inherited from '{baseType.FullName}'";
+                var m = $"Adding '{termType.FullName}' to schema failed: class should be inherited from '{baseType.FullName}'";
                 throw new LanguageSchemaException(m);
             }
+        }
+
+        protected static DomainObjectInfo Get(Type domainObjectType, Func<DomainObjectInfo> domainObjectInfoFactory)
+        {
+            var domainObjectInfo = _instances.SingleOrDefault(i => i.Type == domainObjectType);
+            if (domainObjectInfo == null) _instances.Add(domainObjectInfo = domainObjectInfoFactory.Invoke());
+
+            return domainObjectInfo;
         }
     }
 }

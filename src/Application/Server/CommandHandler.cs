@@ -28,10 +28,9 @@
         private async Task HandleCommand(Command command)
         {
             var commandInfo = _logicSchema.Language.GetCommand(command.GetType());
-            var entityInfo = _logicSchema.GetAggregate(commandInfo).Entity;
-            var aggregate = await LoadOrCreate(command.EntityId, entityInfo);
-            var aggregateInfo = _logicSchema.GetAggregate(entityInfo);
-            if (!aggregateInfo.Dependencies.TryGetValue(commandInfo, out var serviceInfos)) serviceInfos = Array.Empty<ServiceInfo>();
+            var aggregateInfo = _logicSchema.GetAggregate(commandInfo);
+            var aggregate = await LoadOrCreate(command.EntityId, aggregateInfo.Entity);
+            var serviceInfos = aggregateInfo.GetDependencies(commandInfo);
             await aggregate.Do(command, serviceInfos.SelectMany(x => _serviceFactory(x.Type)));
             await Save(aggregate);
             _logger.LogTrace("'{command}' handled", command);

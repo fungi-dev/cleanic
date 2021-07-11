@@ -2,11 +2,13 @@
 {
     using System;
 
-    public class CommandInfo : MessageInfo
+    public sealed class CommandInfo : MessageInfo
     {
-        public CommandInfo(Type commandType) : base(commandType)
+        public static CommandInfo Get(Type type) => (CommandInfo)Get(type, () => new CommandInfo(type));
+
+        private CommandInfo(Type commandType) : base(commandType)
         {
-            EnsureTermTypeCorrect(commandType, typeof(Command));
+            EnsureTermTypeCorrect<Command>(commandType);
         }
     }
 }

@@ -2,11 +2,13 @@
 {
     using System;
 
-    public class EventInfo : DomainObjectInfo
+    public sealed class EventInfo : DomainObjectInfo
     {
-        public EventInfo(Type eventType) : base(eventType)
+        public static EventInfo Get(Type type) => (EventInfo)Get(type, () => new EventInfo(type));
+
+        private EventInfo(Type eventType) : base(eventType)
         {
-            EnsureTermTypeCorrect(eventType, typeof(Event));
+            EnsureTermTypeCorrect<Event>(eventType);
         }
     }
 }

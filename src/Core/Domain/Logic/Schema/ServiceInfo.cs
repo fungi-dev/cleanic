@@ -2,9 +2,11 @@
 {
     using System;
 
-    public class ServiceInfo : DomainObjectInfo
+    public sealed class ServiceInfo : DomainObjectInfo
     {
-        public ServiceInfo(Type serviceType) : base(serviceType)
+        public static ServiceInfo Get(Type type) => (ServiceInfo)Get(type, () => new ServiceInfo(type));
+
+        private ServiceInfo(Type serviceType) : base(serviceType)
         {
             if (serviceType == null) throw new ArgumentNullException(nameof(serviceType));
 
